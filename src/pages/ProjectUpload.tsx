@@ -5,14 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
+import { useNavigate } from "react-router-dom";
+
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
+import {
   ArrowLeft,
   Upload,
   X,
@@ -41,7 +43,7 @@ const ProjectUpload: React.FC = () => {
     demoLink: '',
     researchPaper: ''
   });
-  
+
   const [newTag, setNewTag] = useState('');
   const [newTeamMember, setNewTeamMember] = useState('');
   const [dragActive, setDragActive] = useState(false);
@@ -54,9 +56,16 @@ const ProjectUpload: React.FC = () => {
     role: 'student' as const
   };
 
+  const mockUsers = [
+  { id: '1', name: 'John Doe', email: 'john.doe@university.edu' },
+  { id: '2', name: 'Jane Smith', email: 'jane.smith@university.edu' },
+  { id: '3', name: 'Alice Johnson', email: 'alice.johnson@university.edu' },
+];
+
+
   const subjects = [
-    'Computer Science', 'Engineering', 'Mathematics', 'Physics', 
-    'Chemistry', 'Biology', 'Environmental Science', 'Business', 
+    'Computer Science', 'Engineering', 'Mathematics', 'Physics',
+    'Chemistry', 'Biology', 'Environmental Science', 'Business',
     'Economics', 'Psychology', 'History', 'Literature', 'Art & Design'
   ];
 
@@ -74,7 +83,7 @@ const ProjectUpload: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (type === 'files') {
       setUploadedFiles(prev => [...prev, ...files]);
@@ -120,14 +129,18 @@ const ProjectUpload: React.FC = () => {
   };
 
   const addTeamMember = () => {
-    if (newTeamMember.trim() && !projectData.teamMembers.includes(newTeamMember.trim())) {
-      setProjectData(prev => ({
-        ...prev,
-        teamMembers: [...prev.teamMembers, newTeamMember.trim()]
-      }));
-      setNewTeamMember('');
-    }
-  };
+  if (
+    newTeamMember &&
+    !projectData.teamMembers.includes(newTeamMember)
+  ) {
+    setProjectData((prev) => ({
+      ...prev,
+      teamMembers: [...prev.teamMembers, newTeamMember],
+    }));
+    setNewTeamMember('');
+  }
+};
+
 
   const removeTeamMember = (memberToRemove: string) => {
     setProjectData(prev => ({
@@ -174,18 +187,88 @@ const ProjectUpload: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log('Project Data:', projectData);
-    console.log('Files:', uploadedFiles);
-    console.log('Screenshots:', screenshots);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const formData = new FormData();
+
+    // Basic info
+    formData.append("title", projectData.title);
+    formData.append("description", projectData.description);
+    formData.append("subject", projectData.subject);
+    formData.append("visibility", projectData.visibility);
+    formData.append("tags", JSON.stringify(projectData.tags));
+    formData.append("university", "Example University"); // Replace with actual university from user context
+
+    // Team members — always include current user
+    const uploader = {
+      name: mockUser.name,
+      email: mockUser.email,
+      role: "Owner",
+      avatar: "/placeholder.svg"
+    };
+
+    const teamArray = [uploader, ...projectData.teamMembers.map((name) => ({
+      name,
+      role: "Member",
+      avatar: "/placeholder.svg",
+    }))];
+
+    formData.append("team", JSON.stringify(teamArray));
+
+    // Links
+    const links = [
+      { name: "GitHub Repository", url: projectData.githubLink },
+      { name: "Live Demo", url: projectData.demoLink },
+      { name: "Research Paper", url: projectData.researchPaper },
+    ];
+    formData.append("links", JSON.stringify(links));
+
+    // Files
+    uploadedFiles.forEach((file) => formData.append("files", file));
+    screenshots.forEach((file) => formData.append("screenshots", file));
+
+    // Call backend API
+    const response = await fetch("http://localhost:8080/projects/", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Failed to upload project");
+
+    const result = await response.json();
+    alert("Project uploaded successfully! ID: " + result.id);
+
+    // Navigate to project list page
+    window.location.href = "/projects";
+
+    // Reset form
+    setProjectData({
+      title: "",
+      description: "",
+      subject: "",
+      visibility: "Public",
+      tags: [],
+      teamMembers: [],
+      githubLink: "",
+      demoLink: "",
+      researchPaper: ""
+    });
+    setUploadedFiles([]);
+    setScreenshots([]);
+  } catch (error) {
+    console.error(error);
+    alert("Error uploading project");
+  }
+};
+
+
 
   return (
     <div className="min-h-screen bg-background">
       <Header user={mockUser} />
-      
+
       <main className="container mx-auto px-4 py-8">
         {/* Back Navigation */}
         <div className="mb-6">
@@ -241,7 +324,7 @@ const ProjectUpload: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Subject *</label>
-                      <Select value={projectData.subject} onValueChange={(value) => 
+                      <Select value={projectData.subject} onValueChange={(value) =>
                         setProjectData(prev => ({ ...prev, subject: value }))}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select subject area" />
@@ -258,7 +341,7 @@ const ProjectUpload: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium mb-2">Visibility *</label>
-                      <Select value={projectData.visibility} onValueChange={(value) => 
+                      <Select value={projectData.visibility} onValueChange={(value) =>
                         setProjectData(prev => ({ ...prev, visibility: value }))}>
                         <SelectTrigger>
                           <SelectValue />
@@ -270,13 +353,13 @@ const ProjectUpload: React.FC = () => {
                               <span>Public - Visible to everyone</span>
                             </div>
                           </SelectItem>
-                          <SelectItem value="University Only">
+                          <SelectItem value="Private">
                             <div className="flex items-center space-x-2">
                               <Lock className="w-4 h-4" />
                               <span>University Only - Your university students</span>
                             </div>
                           </SelectItem>
-                          <SelectItem value="Team Only">
+                          <SelectItem value="Team">
                             <div className="flex items-center space-x-2">
                               <Eye className="w-4 h-4" />
                               <span>Team Only - Only team members</span>
@@ -306,7 +389,7 @@ const ProjectUpload: React.FC = () => {
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-                  
+
                   {projectData.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {projectData.tags.map((tag) => (
@@ -335,18 +418,34 @@ const ProjectUpload: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex space-x-2">
-                    <Input
-                      placeholder="Add team member email or name..."
-                      value={newTeamMember}
-                      onChange={(e) => setNewTeamMember(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTeamMember())}
-                    />
-                    <Button type="button" onClick={addTeamMember}>
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
+                 <div>
+  <label className="block text-sm font-medium mb-2">Add Team Member</label>
+  <Select
+    value={newTeamMember}
+    onValueChange={(value) => setNewTeamMember(value)}
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select a team member" />
+    </SelectTrigger>
+    <SelectContent>
+      {mockUsers.map((user) => (
+        <SelectItem key={user.id} value={user.name}>
+          {user.name} ({user.email})
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  <Button
+    type="button"
+    onClick={addTeamMember}
+    className="mt-2"
+  >
+    <Plus className="w-4 h-4 mr-1" />
+    Add
+  </Button>
+</div>
+
+
                   {projectData.teamMembers.length > 0 && (
                     <div className="space-y-2">
                       {projectData.teamMembers.map((member) => (
@@ -411,9 +510,8 @@ const ProjectUpload: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div
-                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                      dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
-                    }`}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+                      }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
@@ -470,9 +568,8 @@ const ProjectUpload: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div
-                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                      dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
-                    }`}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+                      }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
@@ -533,22 +630,22 @@ const ProjectUpload: React.FC = () => {
                     {getVisibilityIcon(projectData.visibility)}
                     <span className="text-sm font-medium">{projectData.visibility}</span>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-muted-foreground">Subject</p>
                     <p className="font-medium">{projectData.subject || 'Not selected'}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-muted-foreground">Tags</p>
                     <p className="text-sm">{projectData.tags.length} tags added</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-muted-foreground">Team</p>
                     <p className="text-sm">{projectData.teamMembers.length + 1} members</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm text-muted-foreground">Files</p>
                     <p className="text-sm">{uploadedFiles.length + screenshots.length} files</p>
