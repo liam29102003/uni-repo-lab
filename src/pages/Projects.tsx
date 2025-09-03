@@ -22,8 +22,18 @@ import {
   BookOpen,
   Upload,
   Grid3X3,
-  List
+  List,
+  Edit,
+  Trash2,
+  MoreVertical
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { DeleteProjectDialog } from '@/components/ui/alert-dialog-delete';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 
@@ -39,11 +49,30 @@ const Projects: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string>('');
 
   const mockUser = {
     name: 'John Doe',
     email: 'john.doe@university.edu',
     role: 'student' as const
+  };
+
+  // Check if user owns the project (simplified logic)
+  const isProjectOwner = (project: any) => {
+    return project.team.includes('Sarah Johnson'); // Mock logic - in real app would check actual ownership
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjectToDelete(projectId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteProject = () => {
+    // Here you would handle the actual deletion
+    console.log('Deleting project:', projectToDelete);
+    setDeleteDialogOpen(false);
+    setProjectToDelete('');
   };
 
   const getVisibilityColor = (visibility: string) => {
@@ -302,13 +331,47 @@ const Projects: React.FC = () => {
                     <Button size="sm" variant="ghost" className="px-3">
                       <Github className="w-4 h-4" />
                     </Button>
-                  </div>
+                    
+                  {/* Edit/Delete dropdown for project owners */}
+                  {isProjectOwner(project) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="ghost" className="px-3">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-background border shadow-md">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/projects/${project.id}/edit`} className="flex items-center">
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit Project
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteProject(project.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Project
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteProjectDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        projectTitle={mockProjects.find(p => p.id === projectToDelete)?.title || ''}
+        onConfirm={confirmDeleteProject}
+      />
 
       <Footer />
     </div>

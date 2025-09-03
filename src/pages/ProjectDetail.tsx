@@ -19,8 +19,18 @@ import {
   Calendar,
   BookOpen,
   MessageSquare,
-  Send
+  Send,
+  Edit,
+  Trash2,
+  MoreVertical
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { DeleteProjectDialog } from '@/components/ui/alert-dialog-delete';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 import { mock } from 'node:test';
@@ -66,6 +76,7 @@ const ProjectDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [comment, setComment] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("overview") // or "overview", etc.
 
@@ -77,6 +88,36 @@ const ProjectDetail: React.FC = () => {
     email: 'john.doe@university.edu',
     role: 'student' as const
   };
+
+  
+  const handleDeleteProjectUi = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  // const confirmDeleteProject = () => {
+  //   // Here you would handle the actual deletion
+  //   console.log('Deleting project:', mockProject.id);
+  //   setDeleteDialogOpen(false);
+  //   // Navigate back to projects page
+  //   window.location.href = '/projects';
+  // };
+
+  // Check if user owns the project (simplified logic)
+  // const isProjectOwner = () => {
+  //   return mockProject.team.some(member => member.name === 'Sarah Johnson'); // Mock logic
+  // };
+
+  const handleDeleteProject = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  // const confirmDeleteProject = () => {
+  //   // Here you would handle the actual deletion
+  //   console.log('Deleting project:', mockProject.id);
+  //   setDeleteDialogOpen(false);
+  //   // Navigate back to projects page
+  //   window.location.href = '/projects';
+  // };
 
 
   //  const [comment, setComment] = useState("")
@@ -444,6 +485,32 @@ const ProjectDetail: React.FC = () => {
               <div className="flex items-center gap-2"><BookOpen className="w-5 h-5 text-primary" /><span className="font-medium">{project.university}</span></div>
               <div className="flex items-center gap-2"><Calendar className="w-5 h-5" /><span>{new Date(project.createdAt).toLocaleDateString()}</span></div>
               <div className="flex items-center gap-2"><Users className="w-5 h-5" /><span>{project.team.length} team members</span></div>
+              
+              {/* Edit/Delete dropdown for project owners */}
+              {isProjectOwner() && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background border shadow-md">
+                    <DropdownMenuItem asChild>
+                      <Link to={`/projects/${id}/edit`} className="flex items-center">
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Project
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleDeleteProject}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Project
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
             <p className="text-academic">{project.description}</p>
           </div>
@@ -781,6 +848,14 @@ const ProjectDetail: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteProjectDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        projectTitle={mockProject.title}
+        onConfirm={confirmDeleteProject}
+      />
       <Footer />
     </div>
   );
