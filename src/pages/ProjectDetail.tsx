@@ -487,7 +487,6 @@ const ProjectDetail: React.FC = () => {
               <div className="flex items-center gap-2"><Users className="w-5 h-5" /><span>{project.team.length} team members</span></div>
               
               {/* Edit/Delete dropdown for project owners */}
-              {isProjectOwner() && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -510,7 +509,7 @@ const ProjectDetail: React.FC = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}
+            
             </div>
             <p className="text-academic">{project.description}</p>
           </div>
@@ -850,12 +849,12 @@ const ProjectDetail: React.FC = () => {
       </main>
 
       {/* Delete Confirmation Dialog */}
-      <DeleteProjectDialog
+      {/* <DeleteProjectDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        projectTitle={mockProject.title}
-        onConfirm={confirmDeleteProject}
-      />
+        projectTitle={"Test"}
+        // onConfirm={handleDeleteComment}
+      /> */}
       <Footer />
     </div>
   );

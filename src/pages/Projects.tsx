@@ -369,7 +369,7 @@ const Projects: React.FC = () => {
       <DeleteProjectDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        projectTitle={mockProjects.find(p => p.id === projectToDelete)?.title || ''}
+        projectTitle={"test"}
         onConfirm={confirmDeleteProject}
       />
 
