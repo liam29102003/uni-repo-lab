@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProjectUpload from "./pages/ProjectUpload";
+import ProjectEdit from "./pages/ProjectEdit";
 import Login from "./pages/Login";
 import Forum from "./pages/Forum";
 import ForumDetail from "./pages/ForumDetail";
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/projects/:id/edit" element={<ProjectEdit />} />
           <Route path="/upload" element={<ProjectUpload />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/forum/:id" element={<ForumDetail />} />
