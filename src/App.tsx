@@ -8,6 +8,7 @@ import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProjectUpload from "./pages/ProjectUpload";
 import ProjectEdit from "./pages/ProjectEdit";
+import Universities from "./pages/Universities";
 import Login from "./pages/Login";
 import Forum from "./pages/Forum";
 import ForumDetail from "./pages/ForumDetail";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/projects/:id" element={<ProjectDetail />} />
           <Route path="/projects/:id/edit" element={<ProjectEdit />} />
           <Route path="/upload" element={<ProjectUpload />} />
+          <Route path="/universities" element={<Universities />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/forum/:id" element={<ForumDetail />} />
           <Route path="/forum/ask" element={<AskQuestion />} />
