@@ -118,7 +118,6 @@ const Profile: React.FC = () => {
  const handleSubmit = async () => {
   const data = new FormData();
   data.append("username", formData.username);
-  data.append("student_id", formData.student_id);
   data.append("year", formData.year.toString());
   data.append("semester", formData.semester.toString());
   data.append("major", formData.major);
@@ -138,9 +137,11 @@ const Profile: React.FC = () => {
     const updatedUser = res.data;
 
     // Prepend backend URL for relative path
-    const imageUrl = updatedUser.profile_image.startsWith("http")
-      ? updatedUser.profile_image
-      : `http://127.0.0.1:8000${updatedUser.profile_image}`;
+    const imageUrl = updatedUser.profile_image
+  ? updatedUser.profile_image.startsWith("http")
+    ? updatedUser.profile_image
+    : `http://127.0.0.1:8000${updatedUser.profile_image}`
+  : formData.profile_preview; // fallback to previous image if null
 
     setUser(updatedUser);
     setFormData((prev) => ({
@@ -148,6 +149,8 @@ const Profile: React.FC = () => {
       profile_preview: imageUrl,
       profile_image: null, // reset file input
     }));
+
+
 
     alert("Profile updated!");
     setIsEditing(false);
