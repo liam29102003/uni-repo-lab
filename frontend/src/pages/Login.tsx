@@ -16,62 +16,117 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrorMsg("");
+//   const handleLogin = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     setIsLoading(true);
+//     setErrorMsg("");
 
-    // Must use URLSearchParams for OAuth2PasswordRequestForm
+//     // Must use URLSearchParams for OAuth2PasswordRequestForm
+//     const params = new URLSearchParams();
+//     params.append("username", email); // backend uses username field for email
+//     params.append("password", password);
+
+//     try {
+//           const response = await axios.post(
+//       "http://127.0.0.1:8000/api/v1/auth/login",
+//       params.toString(), // <-- make sure to stringify
+//       {
+//         headers: {
+//           "Content-Type": "application/x-www-form-urlencoded",
+//         },
+//       }
+//     );
+
+
+// const { access_token } = response.data as { access_token: string };
+//       // Save access token
+//       localStorage.setItem("access_token", access_token);
+
+//       // Fetch user profile
+//       const userResponse = await axios.get(
+//         "http://127.0.0.1:8000/api/v1/users/me",
+//         {
+//           headers: { Authorization: `Bearer ${access_token}` },
+//         }
+//       );
+//       localStorage.setItem("user", JSON.stringify(userResponse.data));
+
+//       // Show success toast
+//       toast({
+//         title: "Login Successful",
+//         description: "Welcome back to UniRepo!",
+//       });
+//       const userData = userResponse.data as { role: string };
+
+//       // Navigate based on role
+//       if (userData.role === 'student') {
+//         navigate('/profile');
+//       } else if (userData.role === 'uni') {
+//         navigate('/university');
+//       }
+
+//     } catch (error: any) {
+//       console.error("Login failed:", error.response?.data || error.message);
+//       setErrorMsg(error.response?.data?.detail || "Login failed");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setErrorMsg("");
+
+  try {
+    // OAuth2PasswordRequestForm style
     const params = new URLSearchParams();
-    params.append("username", email); // backend uses username field for email
+    params.append("username", email); // backend uses username for email
     params.append("password", password);
 
-    try {
-          const response = await axios.post(
+    // 1️⃣ Login
+    const response = await axios.post(
       "http://127.0.0.1:8000/api/v1/auth/login",
-      params.toString(), // <-- make sure to stringify
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
+      params.toString(),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
+    const { access_token } = response.data as { access_token: string };
+    // Save access token
+    localStorage.setItem("access_token", access_token);
+    console.log("Login response:", response.data);
 
-const { access_token } = response.data as { access_token: string };
-      // Save access token
-      localStorage.setItem("access_token", access_token);
 
-      // Fetch user profile
-      const userResponse = await axios.get(
-        "http://127.0.0.1:8000/api/v1/users/me",
-        {
-          headers: { Authorization: `Bearer ${access_token}` },
-        }
-      );
-      localStorage.setItem("user", JSON.stringify(userResponse.data));
+    // 2️⃣ Get current user info
+    const userResponse = await axios.get(
+      "http://127.0.0.1:8000/api/v1/users/me",
+      { headers: { Authorization: `Bearer ${access_token}` } }
+    );
 
-      // Show success toast
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to UniRepo!",
-      });
-      const userData = userResponse.data as { role: string };
+    const user = userResponse.data;
+    localStorage.setItem("user", JSON.stringify(user)); // Save user info
 
-      // Navigate based on role
-      if (userData.role === 'student') {
-        navigate('/profile');
-      } else if (userData.role === 'uni') {
-        navigate('/university');
-      }
+    toast({
+      title: "Login Successful",
+      description: `Welcome back, ${user.username}!`,
+    });
 
-    } catch (error: any) {
-      console.error("Login failed:", error.response?.data || error.message);
-      setErrorMsg(error.response?.data?.detail || "Login failed");
-    } finally {
-      setIsLoading(false);
+    // 3️⃣ Redirect based on role
+    if (user.role === "student") {
+      navigate("/profile");
+    } else if (user.role === "uni") {
+      navigate("/university");
+    } else {
+      navigate("/"); // fallback
     }
-  };
+  } catch (err: any) {
+    console.error("Login failed:", err.response?.data || err.message);
+    setErrorMsg(err.response?.data?.detail || "Login failed");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background px-4">

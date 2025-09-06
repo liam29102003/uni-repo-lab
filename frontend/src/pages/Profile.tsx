@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import api from "@/utils/api"; // axios instance with baseURL
+
 import { 
   Mail, GraduationCap, Edit, Save, Camera, FolderOpen, MessageSquare, ArrowUp, Calendar 
 } from "lucide-react";
@@ -50,6 +52,13 @@ const Profile: React.FC = () => {
 
   // Fetch user data
   const fetchUserData = async () => {
+    const token = localStorage.getItem("access_token"); // ✅ make sure token is retrieved
+    console.log("Token being sent:", token);
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
     try {
       const res = await axios.get<UserData>("http://127.0.0.1:8000/api/v1/users/me", {
         headers: { Authorization: `Bearer ${token}` },
@@ -74,8 +83,10 @@ const Profile: React.FC = () => {
       });
     } catch (err) {
       console.error(err);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
       navigate("/login");
-    }
+      }
   };
 
   useEffect(() => {
@@ -205,11 +216,16 @@ const Profile: React.FC = () => {
                     {isEditing ? <><Save className="w-4 h-4 mr-2" /> Save</> : <><Edit className="w-4 h-4 mr-2" /> Edit Profile</>}
                   </Button>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Student ID</label>
+                  <p className="font-medium">{user.student_id}</p>
+
+                </div>
 
                 {/* Details */}
                 {/* Details */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {["student_id", "major", "year","semester", "date_of_birth"].map((field) => (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[ "major", "year","semester", "date_of_birth"].map((field) => (
                     <div key={field}>
                       <label className="text-sm font-medium text-muted-foreground">{field.replace("_", " ")}</label>
 

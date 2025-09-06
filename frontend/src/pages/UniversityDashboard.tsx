@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import api from "@/utils/api"; // Axios instance with token interceptor
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   LayoutDashboard,
@@ -14,21 +14,24 @@ import {
   GraduationCap,
   Edit,
   Trash2,
-  Eye,
-  TrendingUp
+  TrendingUp,
 } from "lucide-react";
 
 const UniversityDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-
-  // Student management states
   const [students, setStudents] = useState<any[]>([]);
-  const [formData, setFormData] = useState({ username: "", email: "", password: "unistudent" });
+  const [formData, setFormData] = useState({
+    student_id: "",
+    username: "",
+    email: "",
+    year: "",
+    semester: "",
+    major: "",
+    password: "unistudent",
+  });
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [defaultCsvPassword, setDefaultCsvPassword] = useState("unistudent");
-  const [open, setOpen] = useState(false); // Add student form toggle
-
-  // Edit modal state
+  const [open, setOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [editFormData, setEditFormData] = useState<any>({});
@@ -44,23 +47,31 @@ const UniversityDashboard = () => {
     totalStudents: students.length,
     totalProjects: 892,
     activeProjects: 234,
-    completedProjects: 658
+    completedProjects: 658,
   };
 
   // Fetch students from backend
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchStudents = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:8000/api/v1/users");
-        setStudents(res.data.filter((s: any) => s.role === "student"));
-      } catch (err) {
-        console.error(err);
+        const token = localStorage.getItem("token");
+        console.log("Using token:", token);
+
+        const res = await api.get("/users/students");
+        // Some backends return `_id` instead of `id`, normalize it
+        const normalized = res.data.map((s: any) => (
+          { ...s,
+             id: s.user_id, // use UUID for internal operations
+          }));
+        setStudents(normalized);
+      } catch (err: any) {
+        console.error("Fetch students failed:", err.response?.data || err.message);
+        alert(err.response?.data?.detail || "Failed to fetch students. Check your permissions.");
       }
     };
-    fetchUsers();
+    fetchStudents();
   }, []);
 
-  // Input handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -69,88 +80,111 @@ const UniversityDashboard = () => {
     setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
   };
 
-  // Add single student
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://127.0.0.1:8000/api/v1/users/create",
-        { ...formData, role: "student" },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      setStudents(prev => [...prev, res.data]);
-      setFormData({ username: "", email: "", password: "unistudent" });
+      const payload = {
+        ...formData,
+        year: Number(formData.year) || 0,
+        semester: Number(formData.semester) || 0,
+        role: "student",
+      };
+      const res = await api.post("/users/create-student", payload);
+      const student = { ...res.data, id: res.data.user_id };
+      setStudents((prev) => [...prev, student]);
+      alert(`Student ${student.username} added successfully!`);
+      setFormData({ student_id: "", username: "", email: "", year: "", semester: "", major: "", password: "unistudent" });
     } catch (err: any) {
       console.error(err);
       alert(err.response?.data?.detail || "Failed to add student");
     }
   };
 
-  // CSV upload
-  const handleCsvUpload = async () => {
-    if (!csvFile) return alert("Please select a CSV file.");
-    const formDataCsv = new FormData();
-    formDataCsv.append("file", csvFile);
-    formDataCsv.append("default_password", defaultCsvPassword || "unistudent");
-    try {
-      const res = await axios.post(
-        "http://127.0.0.1:8000/api/v1/users/upload-csv",
-        formDataCsv,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-      const { added } = res.data;
-      setStudents(prev => [...prev, ...added]);
-      setCsvFile(null);
-      alert(`Upload complete! Added: ${added.length} users`);
-    } catch (err: any) {
-      console.error(err);
-      alert(err.response?.data?.detail || "Failed to upload CSV");
-    }
-  };
+const handleCsvUpload = async () => {
+  if (!csvFile) return alert("Please select a CSV file.");
+  const formDataCsv = new FormData();
+  formDataCsv.append("file", csvFile);
+  formDataCsv.append("default_password", defaultCsvPassword || "unistudent");
 
-  // Open edit modal
-  const openEditModal = (student: any) => {
-    setSelectedStudent(student);
-    setEditFormData({
-      username: student.username,
-      email: student.email,
-      year: student.year || "",
-      semester: student.semester || "",
-      major: student.major || "",
+  try {
+    const res = await api.post("/users/upload-csv", formDataCsv, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
-    setEditModalOpen(true);
-  };
 
-  // Save edited student
+    // Normalize response so every student has `id` = UUID
+    const added = res.data.added.map((s: any) => ({
+      ...s,
+      id: s.id || s.user_id, // unify to "id"
+    }));
+
+    setStudents((prev) => [...prev, ...added]);
+    setCsvFile(null);
+    alert(`Upload complete! Added: ${added.length} users`);
+  } catch (err: any) {
+    console.error("CSV upload failed:", err.response?.data || err.message);
+    alert(err.response?.data?.detail || "Failed to upload CSV");
+  }
+};
+
+
+const openEditModal = (student: any) => {
+  setSelectedStudent(student); // student already has `id`
+  setEditFormData({
+    student_id: student.student_id || "",
+    username: student.username,
+    email: student.email,
+    year: student.year || "",
+    semester: student.semester || "",
+    major: student.major || "",
+  });
+  setEditModalOpen(true);
+};
+
+ 
   const handleEditStudent = async (userId: string, data: any) => {
-    try {
-      const res = await axios.put(
-        `http://127.0.0.1:8000/api/v1/users/admin/edit/${userId}`,
-        data,
-        { headers: { "Content-Type": "application/json" } }
-      );
-      setStudents(prev =>
-        prev.map(s => (s.user_id === userId ? res.data : s))
-      );
-      alert("Student updated successfully!");
-    } catch (err: any) {
-      console.error(err);
-      alert(err.response?.data?.detail || "Failed to update student");
-    }
-  };
+  try {
+    // Remove empty or null fields
+    const cleanedData = Object.fromEntries(
+      Object.entries(data).filter(([_, v]) => v !== "" && v !== null)
+    );
 
-  // Delete student
+    // Log token to confirm
+    const token = localStorage.getItem("access_token");
+    console.log("Using token for edit:", token);
+
+    // Axios PUT request with token header
+    const res = await api.put(`/users/admin/edit/${userId}`, cleanedData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Normalize response id
+    const updated = { ...res.data, id: res.data.user_id };
+
+    // Update students state
+    setStudents(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+
+    alert("Student updated successfully!");
+  } catch (err: any) {
+    console.error("Edit student error:", err.response?.data || err.message);
+    alert(err.response?.data?.detail || "Failed to update student");
+  }
+};
+
+
   const handleDeleteStudent = async (userId: string) => {
     if (!confirm("Are you sure you want to delete this student?")) return;
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/v1/users/admin/delete/${userId}`);
-      setStudents(prev => prev.filter(s => s.user_id !== userId));
+      await api.delete(`/users/admin/delete/${userId}`);
+      setStudents((prev) => prev.filter((s) => s.id !== userId));
       alert("Student deleted successfully!");
     } catch (err: any) {
       console.error(err);
       alert(err.response?.data?.detail || "Failed to delete student");
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/10">
@@ -241,9 +275,14 @@ const UniversityDashboard = () => {
                     <div className="flex flex-col bg-gray-50 p-4 rounded-lg shadow-sm h-full">
                       <h3 className="text-lg font-semibold mb-3">Add Single Student</h3>
                       <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+                        <Input placeholder="Student ID" name="student_id" value={formData.student_id} onChange={handleChange} className="mb-3" required />
+
                         <Input placeholder="Student Name" name="username" value={formData.username} onChange={handleChange} className="mb-3" required />
                         <Input placeholder="Student Email" type="email" name="email" value={formData.email} onChange={handleChange} className="mb-3" required />
-                        <Input placeholder="Student Password" name="password" value={formData.password} onChange={handleChange} className="mb-3" />
+                        <Input placeholder="Year" name="year" value={formData.year} onChange={handleChange} className="mb-3" required />
+                        <Input placeholder="Semester" name="semester" value={formData.semester} onChange={handleChange} className="mb-3" required />
+                        <Input placeholder="Major" name="major" value={formData.major} onChange={handleChange} className="mb-3" required />
+                        <Input placeholder="Password" name="password" value={formData.password} onChange={handleChange} className="mb-3" />
                         <div className="mt-auto flex gap-3">
                           <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">Add Student</Button>
                         </div>
@@ -274,12 +313,20 @@ const UniversityDashboard = () => {
                   </div>
                 )}
               </Card>
-
+              <div className="flex gap-4 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Search students..." className="pl-10" />
+                </div>
+                <Button variant="outline">Filter by Year</Button>
+                <Button variant="outline">Filter by Major</Button>
+              </div>
               {/* Students Table */}
               <Card className="p-6">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Student ID</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Year</TableHead>
@@ -290,7 +337,8 @@ const UniversityDashboard = () => {
                   </TableHeader>
                   <TableBody>
                     {students.map((s: any) => (
-                      <TableRow key={s.user_id}>
+                      <TableRow key={s.id}>
+                        <TableCell>{s.student_id}</TableCell>
                         <TableCell>{s.username}</TableCell>
                         <TableCell>{s.email}</TableCell>
                         <TableCell>{s.year}</TableCell>
@@ -301,7 +349,7 @@ const UniversityDashboard = () => {
                             <Button variant="outline" size="sm" onClick={() => openEditModal(s)}>
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleDeleteStudent(s.user_id)}>
+                            <Button variant="outline" size="sm" onClick={() => handleDeleteStudent(s.id)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -323,6 +371,12 @@ const UniversityDashboard = () => {
             <h2 className="text-xl font-bold mb-4">Edit Student</h2>
             
             <div className="flex flex-col space-y-3">
+              <Input
+                name="student_id"
+                value={editFormData.student_id}
+                onChange={handleEditChange}
+                placeholder="Student ID"
+              />
               <Input
                 name="username"
                 value={editFormData.username}
@@ -363,8 +417,11 @@ const UniversityDashboard = () => {
                 Cancel
               </Button>
               <Button
-                onClick={async () => {
-                  await handleEditStudent(selectedStudent.user_id, editFormData);
+               onClick={async () => {
+                  if (!selectedStudent?.id) return alert("Student ID missing!"); // now id is UUID
+                  if (!editFormData.student_id) return alert("Student ID (student_id) missing!");
+
+                  await handleEditStudent(selectedStudent.id, editFormData);
                   setEditModalOpen(false);
                 }}
               >
