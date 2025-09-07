@@ -35,6 +35,27 @@ const UniversityDashboard = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [editFormData, setEditFormData] = useState<any>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterMajor, setFilterMajor] = useState("");
+  const [filterYear, setFilterYear] = useState("");
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [resetTargetStudent, setResetTargetStudent] = useState<any>(null);
+
+
+  const filteredStudents = students.filter((s) => {
+    const term = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      s.username?.toLowerCase().includes(term) ||
+      s.student_id?.toLowerCase().includes(term);
+
+    const matchesMajor = filterMajor ? s.major === filterMajor : true;
+    const matchesYear = filterYear ? String(s.year) === filterYear : true;
+
+    return matchesSearch && matchesMajor && matchesYear;
+});
+
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -51,13 +72,13 @@ const UniversityDashboard = () => {
   };
 
   // Fetch students from backend
-  useEffect(() => {
-    const fetchStudents = async () => {
+      const fetchStudents = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("access_token");
         console.log("Using token:", token);
 
         const res = await api.get("/users/students");
+        console.log("Fetch students response:", res.data);  // <--- add this
         // Some backends return `_id` instead of `id`, normalize it
         const normalized = res.data.map((s: any) => (
           { ...s,
@@ -69,6 +90,8 @@ const UniversityDashboard = () => {
         alert(err.response?.data?.detail || "Failed to fetch students. Check your permissions.");
       }
     };
+
+  useEffect(() => {
     fetchStudents();
   }, []);
 
@@ -123,6 +146,33 @@ const handleCsvUpload = async () => {
   } catch (err: any) {
     console.error("CSV upload failed:", err.response?.data || err.message);
     alert(err.response?.data?.detail || "Failed to upload CSV");
+  }
+};
+
+const openResetModal = (student: any) => {
+  setResetTargetStudent(student);
+  setResetPasswordValue(""); // clear old value
+  setResetModalOpen(true);
+};
+
+const handleResetPassword = async (userId: string) => {
+  const newPassword = prompt("Enter a new password for this student:");
+  if (!newPassword) return; // cancelled
+
+  try {
+    const formData = new FormData();
+    formData.append("new_password", newPassword);
+
+    const res = await api.post(`/users/admin/reset-password/${userId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    alert(res.data.detail || "Password reset successfully!");
+  } catch (err: any) {
+    console.error("Reset password failed:", err.response?.data || err.message);
+    alert(err.response?.data?.detail || "Failed to reset password");
   }
 };
 
@@ -313,14 +363,61 @@ const openEditModal = (student: any) => {
                   </div>
                 )}
               </Card>
-              <div className="flex gap-4 mb-4">
+              {/* <div className="flex gap-4 mb-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search students..." className="pl-10" />
+                  <Input
+                    placeholder="Search students..."
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+
                 </div>
                 <Button variant="outline">Filter by Year</Button>
                 <Button variant="outline">Filter by Major</Button>
+              </div> */}
+              {/* search bar and filter buttons */}
+              <div className="flex gap-4 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search students..."
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                {/* Year filter */}
+                <select
+                  value={filterYear}
+                  onChange={(e) => setFilterYear(e.target.value)}
+                  className="border rounded p-2"
+                >
+                  <option value="">All Years</option>
+                  {[...new Set(students.map((s) => s.year))].map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Major filter */}
+                <select
+                  value={filterMajor}
+                  onChange={(e) => setFilterMajor(e.target.value)}
+                  className="border rounded p-2"
+                >
+                  <option value="">All Majors</option>
+                  {[...new Set(students.map((s) => s.major))].map((major) => (
+                    <option key={major} value={major}>
+                      {major}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               {/* Students Table */}
               <Card className="p-6">
                 <Table>
@@ -336,7 +433,7 @@ const openEditModal = (student: any) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {students.map((s: any) => (
+                    {filteredStudents.map((s: any) => (
                       <TableRow key={s.id}>
                         <TableCell>{s.student_id}</TableCell>
                         <TableCell>{s.username}</TableCell>
@@ -352,6 +449,10 @@ const openEditModal = (student: any) => {
                             <Button variant="outline" size="sm" onClick={() => handleDeleteStudent(s.id)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleResetPassword(s.id)}>
+                              Reset password
+                            </Button>
+
                           </div>
                         </TableCell>
                       </TableRow>
@@ -431,6 +532,9 @@ const openEditModal = (student: any) => {
           </div>
         </div>
       )}
+
+
+
     </div>
   );
 };

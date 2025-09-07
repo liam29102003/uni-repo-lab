@@ -28,7 +28,7 @@ const Login: React.FC = () => {
 
 //     try {
 //           const response = await axios.post(
-//       "http://127.0.0.1:8000/api/v1/auth/login",
+//       "http://127.0.0.1:8080/api/v1/auth/login",
 //       params.toString(), // <-- make sure to stringify
 //       {
 //         headers: {
@@ -44,7 +44,7 @@ const Login: React.FC = () => {
 
 //       // Fetch user profile
 //       const userResponse = await axios.get(
-//         "http://127.0.0.1:8000/api/v1/users/me",
+//         "http://127.0.0.1:8080/api/v1/users/me",
 //         {
 //           headers: { Authorization: `Bearer ${access_token}` },
 //         }
@@ -86,7 +86,7 @@ const handleLogin = async (e: React.FormEvent) => {
 
     // 1️⃣ Login
     const response = await axios.post(
-      "http://127.0.0.1:8000/api/v1/auth/login",
+      "http://127.0.0.1:8080/api/v1/auth/login",
       params.toString(),
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
@@ -99,7 +99,7 @@ const handleLogin = async (e: React.FormEvent) => {
 
     // 2️⃣ Get current user info
     const userResponse = await axios.get(
-      "http://127.0.0.1:8000/api/v1/users/me",
+      "http://127.0.0.1:8080/api/v1/users/me",
       { headers: { Authorization: `Bearer ${access_token}` } }
     );
 

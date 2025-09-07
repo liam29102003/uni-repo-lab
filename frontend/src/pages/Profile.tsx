@@ -30,9 +30,25 @@ interface UserData {
   description: string;
   profile_image: string;
 }
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  university: string;
+  subject: string;
+  visibility: string;
+  team: string;
+  tags: string[];
+  screenshots?: string[];
+  files?: string[];
+  links?: string[];
+}
+
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<UserData | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
@@ -60,14 +76,14 @@ const Profile: React.FC = () => {
         return;
       }
     try {
-      const res = await axios.get<UserData>("http://127.0.0.1:8000/api/v1/users/me", {
+      const res = await axios.get<UserData>("http://127.0.0.1:8080/api/v1/users/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userData = res.data;
          // Fix image URL
       const imageUrl = userData.profile_image?.startsWith("http")
       ? userData.profile_image
-      : `http://127.0.0.1:8000${userData.profile_image}`;
+      : `http://127.0.0.1:8080${userData.profile_image}`;
       setUser(userData);
       setFormData({
         username: userData.username || "",
@@ -92,6 +108,23 @@ const Profile: React.FC = () => {
   useEffect(() => {
     fetchUserData();
   }, []);
+
+    // 2️⃣ Fetch projects once user data is loaded
+  useEffect(() => {
+    const fetchUserProjects = async () => {
+      if (!user?._id || !user?.user_id) return;
+      try {
+        const res = await api.get<Project[]>(
+          `http://127.0.0.1:8080/projects/team/${user.user_id}?_id=${user._id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setProjects(res.data);
+      } catch (err) {
+        console.error("Failed to fetch projects:", err);
+      }
+    };
+    fetchUserProjects();
+  }, [user, token]);
 
   if (!user) return <div>Loading...</div>;
 
@@ -127,7 +160,7 @@ const Profile: React.FC = () => {
   if (formData.profile_image) data.append("profile_image", formData.profile_image);
 
   try {
-    const res = await axios.post("http://127.0.0.1:8000/api/v1/users/update", data, {
+    const res = await axios.post("http://127.0.0.1:8080/api/v1/users/update", data, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
@@ -140,7 +173,7 @@ const Profile: React.FC = () => {
     const imageUrl = updatedUser.profile_image
   ? updatedUser.profile_image.startsWith("http")
     ? updatedUser.profile_image
-    : `http://127.0.0.1:8000${updatedUser.profile_image}`
+    : `http://127.0.0.1:8080${updatedUser.profile_image}`
   : formData.profile_preview; // fallback to previous image if null
 
     setUser(updatedUser);
@@ -159,6 +192,9 @@ const Profile: React.FC = () => {
     alert("Failed to update profile.");
   }
 };
+
+
+
 
   // Mock projects & Q&A
   const mockProjects = [
@@ -287,30 +323,34 @@ const Profile: React.FC = () => {
 
             <TabsContent value="projects" className="mt-6">
               <div className="grid gap-4">
-                {mockProjects.map((project) => (
-                  <Card key={project.id} className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">{project.name}</h3>
-                        <p className="text-muted-foreground text-sm">{project.description}</p>
+                {projects.length > 0 ? (
+                  projects.map((project) => (
+                    <Card key={project.id} className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold">{project.title}</h3>
+                          <p className="text-muted-foreground text-sm">{project.description}</p>
+                        </div>
+                        <div className="text-right text-sm text-muted-foreground">
+                          <p>{project.university}</p>
+                          <p>{project.subject}</p>
+                        </div>
                       </div>
-                      <div className="text-right text-sm text-muted-foreground">
-                        <p>{project.year}</p>
-                        <p>{project.subject}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {project.tags?.map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
                       </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {project.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No projects found for you.</p>
+                )}
               </div>
             </TabsContent>
+
 
             <TabsContent value="qa" className="mt-6">
               <div className="space-y-6">
