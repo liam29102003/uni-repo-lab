@@ -15,7 +15,12 @@ const Login: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
+  interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  mongo_id: string;
+  user_id: string;
+}
 //   const handleLogin = async (e: React.FormEvent) => {
 //     e.preventDefault();
 //     setIsLoading(true);
@@ -91,10 +96,12 @@ const handleLogin = async (e: React.FormEvent) => {
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
-    const { access_token } = response.data as { access_token: string };
-    // Save access token
+    const { access_token, refresh_token, mongo_id,user_id  } = response.data as LoginResponse;
+    // Store tokens
     localStorage.setItem("access_token", access_token);
-    console.log("Login response:", response.data);
+    localStorage.setItem("refresh_token", refresh_token);
+    console.log("Full login response:", response.data);
+
 
 
     // 2️⃣ Get current user info
@@ -105,6 +112,10 @@ const handleLogin = async (e: React.FormEvent) => {
 
     const user = userResponse.data;
     localStorage.setItem("user", JSON.stringify(user)); // Save user info
+    localStorage.setItem("user_id", user.user_id);
+    localStorage.setItem("mongo_id", user.id);
+    console.log("Fetched user data:", user);
+    console.log("User ID:", user.user_id, "Mongo ID:", user.id);
 
     toast({
       title: "Login Successful",
@@ -188,12 +199,6 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               </div>
 
-              {/* Forgot Password */}
-              <div className="text-right">
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
 
               {/* Submit Button */}
               <Button type="submit" className="w-full" disabled={isLoading}>

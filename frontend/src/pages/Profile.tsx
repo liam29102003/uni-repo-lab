@@ -18,6 +18,8 @@ import {
 
 // User Data type
 interface UserData {
+  _id: string; // MongoDB ObjectId
+  user_id: string; // UUID
   username: string;
   email: string;
   university: string;
@@ -30,6 +32,7 @@ interface UserData {
   description: string;
   profile_image: string;
 }
+
 interface Project {
   id: string;
   title: string;
@@ -66,6 +69,7 @@ const Profile: React.FC = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("access_token");
 
+
   // Fetch user data
   const fetchUserData = async () => {
     const token = localStorage.getItem("access_token"); // ✅ make sure token is retrieved
@@ -80,10 +84,14 @@ const Profile: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userData = res.data;
+      localStorage.setItem("user_id", userData.user_id); // store UUID
+      console.log("User ID:", userData.user_id);
+
          // Fix image URL
       const imageUrl = userData.profile_image?.startsWith("http")
       ? userData.profile_image
       : `http://127.0.0.1:8080${userData.profile_image}`;
+
       setUser(userData);
       setFormData({
         username: userData.username || "",
@@ -97,6 +105,8 @@ const Profile: React.FC = () => {
         profile_image: null,
         profile_preview: imageUrl || "",
       });
+
+    
     } catch (err) {
       console.error(err);
       localStorage.removeItem("access_token");
@@ -105,26 +115,31 @@ const Profile: React.FC = () => {
       }
   };
 
+// Fetch projects
+  const fetchProjects = async (userId: string) => {
+    if (!token || !userId) return;
+
+    try {
+      const res = await axios.get<Project[]>(`http://127.0.0.1:8090/projects/team/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProjects(res.data);
+    } catch (err) {
+      console.error("Failed to fetch projects:", err);
+    }
+  };
+
+  // Load user then projects
   useEffect(() => {
-    fetchUserData();
+    const loadData = async () => {
+      await fetchUserData();
+      const userId = localStorage.getItem("user_id");
+      if (userId) await fetchProjects(userId);
+    };
+    loadData();
   }, []);
 
-    // 2️⃣ Fetch projects once user data is loaded
-  useEffect(() => {
-    const fetchUserProjects = async () => {
-      if (!user?._id || !user?.user_id) return;
-      try {
-        const res = await api.get<Project[]>(
-          `http://127.0.0.1:8080/projects/team/${user.user_id}?_id=${user._id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setProjects(res.data);
-      } catch (err) {
-        console.error("Failed to fetch projects:", err);
-      }
-    };
-    fetchUserProjects();
-  }, [user, token]);
+
 
   if (!user) return <div>Loading...</div>;
 
@@ -182,7 +197,6 @@ const Profile: React.FC = () => {
       profile_preview: imageUrl,
       profile_image: null, // reset file input
     }));
-
 
 
     alert("Profile updated!");
@@ -307,6 +321,7 @@ const Profile: React.FC = () => {
             </div>
           </Card>
 
+
           {/* Tabs */}
            {/* Profile Tabs */}
           <Tabs defaultValue="projects" className="w-full">
@@ -321,24 +336,33 @@ const Profile: React.FC = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="projects" className="mt-6">
+           <TabsContent value="projects" className="mt-6">
               <div className="grid gap-4">
                 {projects.length > 0 ? (
-                  projects.map((project) => (
-                    <Card key={project.id} className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold">{project.title}</h3>
-                          <p className="text-muted-foreground text-sm">{project.description}</p>
-                        </div>
-                        <div className="text-right text-sm text-muted-foreground">
-                          <p>{project.university}</p>
-                          <p>{project.subject}</p>
-                        </div>
+                  projects.map(project => (
+                    <Card key={project.id} className="p-6 border shadow-sm hover:shadow-lg transition duration-200">
+                      {/* Header: Title + Description */}
+                      <div className="mb-4 bg-blue-100 p-4 rounded-md">
+                        <h3 className="text-xl font-bold text-gray-800">{project.title}</h3>
+                        <p className="text-gray-500 text-sm mt-1">{project.description}</p>
                       </div>
+
+                      {/* Meta info: University, Subject, Visibility */}
+                      <div className="flex flex-wrap justify-between items-center mb-4 bg-grey-100 p-3 rounded-md">
+                        <div className="flex flex-col text-sm text-gray-600 space-y-1 ">
+                          {/* <span><strong>University:</strong> {project.university}</span> */}
+                          <span><strong>Subject:</strong> {project.subject}</span>
+                        </div>
+                        <div className="text-sm font-medium text-gray-600 bg-green-100 px-3 py-1 rounded-full">
+                          Visibility: <span className="font-bold text-green-700">{project.visibility}</span>
+                        </div>
+                        
+                      </div>
+
+                      {/* Tags */}
                       <div className="flex flex-wrap gap-2">
-                        {project.tags?.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                        {project.tags.map(tag => (
+                          <Badge key={tag} className="bg-blue-100 text-blue-800 hover:text-yellow-50 px-2 py-1 rounded-full text-xs">
                             {tag}
                           </Badge>
                         ))}
@@ -346,10 +370,11 @@ const Profile: React.FC = () => {
                     </Card>
                   ))
                 ) : (
-                  <p className="text-muted-foreground">No projects found for you.</p>
+                  <p className="text-gray-500">No projects found.</p>
                 )}
               </div>
             </TabsContent>
+
 
 
             <TabsContent value="qa" className="mt-6">

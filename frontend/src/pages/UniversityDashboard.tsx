@@ -1,20 +1,25 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import UniHeader from "@/components/Layout/Header";
 import api from "@/utils/api"; // Axios instance with token interceptor
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  LayoutDashboard,
-  Users,
-  FolderOpen,
+import { 
+  LayoutDashboard, 
+  Users, 
+  FolderOpen, 
   Settings,
   Search,
-  UserPlus,
-  GraduationCap,
+  Plus,
+  Eye,
   Edit,
   Trash2,
+  Upload,
   TrendingUp,
+  UserPlus,
+  GraduationCap
 } from "lucide-react";
 
 const UniversityDashboard = () => {
@@ -70,6 +75,13 @@ const UniversityDashboard = () => {
     activeProjects: 234,
     completedProjects: 658,
   };
+
+  const mockProjects = [
+    { id: 1, title: "AI-Powered Study Assistant", team: ["Sarah Chen", "Alex Kumar"], subject: "Computer Science", year: "2024", status: "Active" },
+    { id: 2, title: "Blockchain Voting System", team: ["Maria Rodriguez"], subject: "Cryptography", year: "2024", status: "Active" },
+    { id: 3, title: "IoT Smart Campus", team: ["James Wilson", "Sarah Chen"], subject: "IoT", year: "2023", status: "Completed" },
+  ];
+
 
   // Fetch students from backend
       const fetchStudents = async () => {
@@ -262,6 +274,17 @@ const openEditModal = (student: any) => {
                 </Button>
               );
             })}
+            <Button
+              variant="ghost"
+              className="w-full justify-start mt-8 text-red-600 hover:bg-red-100"
+              onClick={() => {
+                localStorage.removeItem("access_token");
+                window.location.href = '/login';
+              }}
+            >
+              <FolderOpen className="w-4 h-4 mr-3" />
+              Logout
+            </Button>
           </nav>
         </div>
 
@@ -460,6 +483,98 @@ const openEditModal = (student: any) => {
                   </TableBody>
                 </Table>
               </Card>
+            </div>
+          )}
+
+
+           {activeTab === "projects" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-2xl font-bold mb-2">Project Management</h1>
+                  <p className="text-muted-foreground">Manage projects from your university</p>
+                </div>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Project
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {mockProjects.map((project) => (
+                  <Card key={project.id} className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-semibold">{project.title}</h3>
+                        <Badge variant={project.status === "Active" ? "default" : "secondary"}>
+                          {project.status}
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium">Team:</span> {project.team.join(", ")}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium">Subject:</span> {project.subject}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium">Year:</span> {project.year}
+                        </p>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold mb-2">University Settings</h1>
+                <p className="text-muted-foreground">Configure your university profile and preferences</p>
+              </div>
+              
+              <div className="grid gap-6">
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">University Profile</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">University Name</label>
+                      <Input defaultValue="Massachusetts Institute of Technology" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Domain</label>
+                      <Input defaultValue="mit.edu" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Contact Email</label>
+                      <Input defaultValue="admin@mit.edu" />
+                    </div>
+                  </div>
+                </Card>
+                
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Security Settings</h3>
+                  <div className="space-y-4">
+                    <Button variant="outline">Change Admin Password</Button>
+                    <Button variant="outline">Manage Access Permissions</Button>
+                    <Button variant="outline">View Security Logs</Button>
+                  </div>
+                </Card>
+              </div>
             </div>
           )}
         </div>
