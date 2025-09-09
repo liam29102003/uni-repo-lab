@@ -63,7 +63,7 @@ const ProjectEdit: React.FC = () => {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/projects/${id}`);
+        const res = await axios.get(`http://localhost:8090/projects/${id}`);
         const project = res.data;
 
         console.log("Fetched project data:", project);
@@ -147,7 +147,7 @@ const ProjectEdit: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:8080/projects/${id}`, formData);
+      await axios.put(`http://localhost:8090/projects/${id}`, formData);
 
       toast({
         title: "Project Updated",

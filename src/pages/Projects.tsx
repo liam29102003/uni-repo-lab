@@ -79,7 +79,7 @@ const Projects: React.FC = () => {
     if (!projectToDelete) return;
 
     try {
-      await axios.delete(`http://localhost:8080/projects/${projectToDelete}`);
+      await axios.delete(`http://localhost:8090/projects/${projectToDelete}`);
 
       // ✅ Update UI by removing the deleted project
       setProjects((prev) => prev.filter((p) => p.id !== projectToDelete));
@@ -132,7 +132,7 @@ const Projects: React.FC = () => {
         if (selectedUniversity && selectedUniversity !== "All Universities") params.append("university", selectedUniversity);
         if (searchQuery) params.append("search", searchQuery); // if backend supports search
 
-        const response = await fetch(`http://localhost:8080/projects/?${params.toString()}`);
+        const response = await fetch(`http://localhost:8090/projects/?${params.toString()}`);
         if (!response.ok) throw new Error('Failed to fetch projects');
 
         const data = await response.json();
@@ -155,7 +155,7 @@ const Projects: React.FC = () => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/subjects");
+        const res = await axios.get("http://localhost:8090/subjects");
         setSubjects(res.data.subjects || []);
       } catch (err) {
         console.error("Failed to fetch subjects:", err);
@@ -173,7 +173,7 @@ const Projects: React.FC = () => {
   useEffect(() => {
     const fetchTechnologies = async () => {
       try {
-        const res = await axios.get('http://localhost:8080/tags'); // your API endpoint
+        const res = await axios.get('http://localhost:8090/tags'); // your API endpoint
             // console.log(Array.isArray(res.data.tags));
 
         if (res.data && Array.isArray(res.data.tags)) {

@@ -187,7 +187,7 @@ const ProjectDetail: React.FC = () => {
   // Delete comment
   const handleDeleteComment = async (commentId) => {
     try {
-      await axios.delete(`http://localhost:8080/projects/${projectId}/comments/${commentId}`)
+      await axios.delete(`http://localhost:8090/projects/${projectId}/comments/${commentId}`)
       setComments((prev) => prev.filter((c) => c.id !== commentId)) // update UI
     } catch (err) {
       console.error("Failed to delete comment", err)
@@ -200,7 +200,7 @@ const ProjectDetail: React.FC = () => {
       form.append("content", newContent)
 
       await axios.put(
-        `http://localhost:8080/projects/${projectId}/comments/${commentId}`,
+        `http://localhost:8090/projects/${projectId}/comments/${commentId}`,
         form
       )
       fetchComments() // reload
@@ -235,7 +235,7 @@ const ProjectDetail: React.FC = () => {
       formData.append("userId", mockUser.id);
 
       const res = await axios.post(
-        `http://localhost:8080/projects/${project.id}/star`,
+        `http://localhost:8090/projects/${project.id}/star`,
         formData
       );
       console.log("Star toggled", res.data);
@@ -264,7 +264,7 @@ const ProjectDetail: React.FC = () => {
       form.append("authorId", mockUser.id) // assuming mockUser has id
 
       await axios.post(
-        `http://localhost:8080/projects/${projectId}/comments/${commentId}/replies`,
+        `http://localhost:8090/projects/${projectId}/comments/${commentId}/replies`,
         form
       )
 
@@ -281,7 +281,7 @@ const ProjectDetail: React.FC = () => {
       form.append("content", newContent)
 
       await axios.put(
-        `http://localhost:8080/projects/${projectId}/comments/${commentId}/replies/${replyId}`,
+        `http://localhost:8090/projects/${projectId}/comments/${commentId}/replies/${replyId}`,
         form
       )
       fetchComments()
@@ -292,7 +292,7 @@ const ProjectDetail: React.FC = () => {
   const handleDeleteReply = async (commentId, replyId) => {
     try {
       await axios.delete(
-        `http://localhost:8080/projects/${projectId}/comments/${commentId}/replies/${replyId}`
+        `http://localhost:8090/projects/${projectId}/comments/${commentId}/replies/${replyId}`
       )
       fetchComments()
     } catch (err) {
@@ -309,7 +309,7 @@ const ProjectDetail: React.FC = () => {
 
   const fetchComments = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/projects/${projectId}/comments`)
+      const res = await axios.get(`http://localhost:8090/projects/${projectId}/comments`)
       setComments(res.data.comments)
     } catch (err) {
       console.error("Failed to fetch comments", err)
@@ -325,7 +325,7 @@ const ProjectDetail: React.FC = () => {
       form.append("content", comment)
       form.append("authorId", mockUser.id) // assuming mockUser has id
 
-      await axios.post(`http://localhost:8080/projects/${projectId}/comments`, form)
+      await axios.post(`http://localhost:8090/projects/${projectId}/comments`, form)
       setComment("")
       fetchComments() // Refresh comments
     } catch (err) {
@@ -391,7 +391,7 @@ const ProjectDetail: React.FC = () => {
 
     try {
       await axios.put(
-        `http://localhost:8080/projects/${projectId}/comments/${commentId}/replies/${replyId}`,
+        `http://localhost:8090/projects/${projectId}/comments/${commentId}/replies/${replyId}`,
         { content: reply.editContent },
         {
           headers: {
@@ -416,7 +416,7 @@ const ProjectDetail: React.FC = () => {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/projects/${id}`);
+        const response = await fetch(`http://localhost:8090/projects/${id}`);
         if (!response.ok) throw new Error('Failed to fetch project');
         const data = await response.json();
         setProject(data);
