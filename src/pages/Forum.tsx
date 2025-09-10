@@ -39,7 +39,7 @@ const Forum = () => {
       // Add filters (array)
       filter.forEach(f => params.append("filters", f));
 
-      const response = await fetch(`http://localhost:8000/api/questions?${params.toString()}`);
+      const response = await fetch(`http://localhost:8070/api/questions?${params.toString()}`);
       const data = await response.json();
       console.log(data)
       setForums(data.forums);

@@ -88,7 +88,7 @@ const AskQuestion: React.FC = () => {
    questionData.university = JSON.parse(localStorage.getItem('user')).university,
    console.log(questionData)
   try {
-    const res = await fetch("http://127.0.0.1:8000/api/questions/", {
+    const res = await fetch("http://127.0.0.1:8070/api/questions/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

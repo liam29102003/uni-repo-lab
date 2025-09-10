@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 
 const Adminlayout = () => {
-  const Admin_API = import.meta.env.VITE_ADMIN_API || "http://localhost:8080/";
+  const Admin_API = import.meta.env.VITE_ADMIN_API || "http://localhost:8000/";
 
   const [activeTab, setActiveTab] = useState("dashboard");
 
