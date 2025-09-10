@@ -1,0 +1,676 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from "react-router-dom";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Plus,
+  FileText,
+  Image as ImageIcon,
+  Code,
+  Archive,
+  Users,
+  Globe,
+  Lock,
+  Eye
+} from 'lucide-react';
+import Header from '@/components/Layout/Header';
+import Footer from '@/components/Layout/Footer';
+
+const ProjectUpload: React.FC = () => {
+  const [projectData, setProjectData] = useState({
+    title: '',
+    description: '',
+    subject: '',
+    visibility: 'Public',
+    tags: [] as string[],
+    teamMembers: [] as string[],
+    githubLink: '',
+    demoLink: '',
+    researchPaper: ''
+  });
+
+  const [newTag, setNewTag] = useState('');
+  const [newTeamMember, setNewTeamMember] = useState('');
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [screenshots, setScreenshots] = useState<File[]>([]);
+
+  const mockUser = {
+    name: 'John Doe',
+    email: 'john.doe@university.edu',
+    role: 'student' as const
+  };
+
+  const mockUsers = [
+  { id: '1', name: 'John Doe', email: 'john.doe@university.edu' },
+  { id: '2', name: 'Jane Smith', email: 'jane.smith@university.edu' },
+  { id: '3', name: 'Alice Johnson', email: 'alice.johnson@university.edu' },
+];
+
+
+  const subjects = [
+    'Computer Science', 'Engineering', 'Mathematics', 'Physics',
+    'Chemistry', 'Biology', 'Environmental Science', 'Business',
+    'Economics', 'Psychology', 'History', 'Literature', 'Art & Design'
+  ];
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, type: 'files' | 'screenshots') => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (type === 'files') {
+      setUploadedFiles(prev => [...prev, ...files]);
+    } else {
+      setScreenshots(prev => [...prev, ...files]);
+    }
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>, type: 'files' | 'screenshots') => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      if (type === 'files') {
+        setUploadedFiles(prev => [...prev, ...files]);
+      } else {
+        setScreenshots(prev => [...prev, ...files]);
+      }
+    }
+  };
+
+  const removeFile = (index: number, type: 'files' | 'screenshots') => {
+    if (type === 'files') {
+      setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setScreenshots(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const addTag = () => {
+    if (newTag.trim() && !projectData.tags.includes(newTag.trim())) {
+      setProjectData(prev => ({
+        ...prev,
+        tags: [...prev.tags, newTag.trim()]
+      }));
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setProjectData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
+  const addTeamMember = () => {
+  if (
+    newTeamMember &&
+    !projectData.teamMembers.includes(newTeamMember)
+  ) {
+    setProjectData((prev) => ({
+      ...prev,
+      teamMembers: [...prev.teamMembers, newTeamMember],
+    }));
+    setNewTeamMember('');
+  }
+};
+
+
+  const removeTeamMember = (memberToRemove: string) => {
+    setProjectData(prev => ({
+      ...prev,
+      teamMembers: prev.teamMembers.filter(member => member !== memberToRemove)
+    }));
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'svg':
+        return <ImageIcon className="w-4 h-4" />;
+      case 'js':
+      case 'ts':
+      case 'py':
+      case 'java':
+      case 'cpp':
+      case 'c':
+        return <Code className="w-4 h-4" />;
+      case 'zip':
+      case 'rar':
+      case 'tar':
+        return <Archive className="w-4 h-4" />;
+      default:
+        return <FileText className="w-4 h-4" />;
+    }
+  };
+
+  const getVisibilityIcon = (visibility: string) => {
+    switch (visibility) {
+      case 'Public':
+        return <Globe className="w-4 h-4" />;
+      case 'University Only':
+        return <Lock className="w-4 h-4" />;
+      case 'Team Only':
+        return <Eye className="w-4 h-4" />;
+      default:
+        return <Globe className="w-4 h-4" />;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const formData = new FormData();
+
+    // Basic info
+    formData.append("title", projectData.title);
+    formData.append("description", projectData.description);
+    formData.append("subject", projectData.subject);
+    formData.append("visibility", projectData.visibility);
+    formData.append("tags", JSON.stringify(projectData.tags));
+    formData.append("university", "Example University"); // Replace with actual university from user context
+
+    // Team members — always include current user
+    const uploader = {
+      name: mockUser.name,
+      email: mockUser.email,
+      role: "Owner",
+      avatar: "/placeholder.svg"
+    };
+
+    const teamArray = [uploader, ...projectData.teamMembers.map((name) => ({
+      name,
+      role: "Member",
+      avatar: "/placeholder.svg",
+    }))];
+
+    formData.append("team", JSON.stringify(teamArray));
+
+    // Links
+    const links = [
+      { name: "GitHub Repository", url: projectData.githubLink },
+      { name: "Live Demo", url: projectData.demoLink },
+      { name: "Research Paper", url: projectData.researchPaper },
+    ];
+    formData.append("links", JSON.stringify(links));
+
+    // Files
+    uploadedFiles.forEach((file) => formData.append("files", file));
+    screenshots.forEach((file) => formData.append("screenshots", file));
+
+    // Call backend API
+    const response = await fetch("http://localhost:8080/projects/", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Failed to upload project");
+
+    const result = await response.json();
+    alert("Project uploaded successfully! ID: " + result.id);
+
+    // Navigate to project list page
+    window.location.href = "/projects";
+
+    // Reset form
+    setProjectData({
+      title: "",
+      description: "",
+      subject: "",
+      visibility: "Public",
+      tags: [],
+      teamMembers: [],
+      githubLink: "",
+      demoLink: "",
+      researchPaper: ""
+    });
+    setUploadedFiles([]);
+    setScreenshots([]);
+  } catch (error) {
+    console.error(error);
+    alert("Error uploading project");
+  }
+};
+
+
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header user={mockUser} />
+
+      <main className="container mx-auto px-4 py-8">
+        {/* Back Navigation */}
+        <div className="mb-6">
+          <Button variant="ghost" asChild className="mb-4">
+            <Link to="/projects">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Projects
+            </Link>
+          </Button>
+        </div>
+
+        {/* Page Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold heading-academic mb-2">
+            Upload New Project
+          </h1>
+          <p className="text-xl text-academic">
+            Share your innovative work with the global university community
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Form */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Project Title *</label>
+                    <Input
+                      placeholder="Enter your project title..."
+                      value={projectData.title}
+                      onChange={(e) => setProjectData(prev => ({ ...prev, title: e.target.value }))}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Description *</label>
+                    <Textarea
+                      placeholder="Describe your project, its goals, methodology, and key findings..."
+                      value={projectData.description}
+                      onChange={(e) => setProjectData(prev => ({ ...prev, description: e.target.value }))}
+                      className="min-h-[120px]"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Subject *</label>
+                      <Select value={projectData.subject} onValueChange={(value) =>
+                        setProjectData(prev => ({ ...prev, subject: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select subject area" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subjects.map((subject) => (
+                            <SelectItem key={subject} value={subject}>
+                              {subject}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Visibility *</label>
+                      <Select value={projectData.visibility} onValueChange={(value) =>
+                        setProjectData(prev => ({ ...prev, visibility: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Public">
+                            <div className="flex items-center space-x-2">
+                              <Globe className="w-4 h-4" />
+                              <span>Public - Visible to everyone</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="Private">
+                            <div className="flex items-center space-x-2">
+                              <Lock className="w-4 h-4" />
+                              <span>University Only - Your university students</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="Team">
+                            <div className="flex items-center space-x-2">
+                              <Eye className="w-4 h-4" />
+                              <span>Team Only - Only team members</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tags */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tags & Technologies</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Add tags (e.g., React, Python, AI)..."
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    />
+                    <Button type="button" onClick={addTag}>
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {projectData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {projectData.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Team Members */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Team Members
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                 <div>
+  <label className="block text-sm font-medium mb-2">Add Team Member</label>
+  <Select
+    value={newTeamMember}
+    onValueChange={(value) => setNewTeamMember(value)}
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select a team member" />
+    </SelectTrigger>
+    <SelectContent>
+      {mockUsers.map((user) => (
+        <SelectItem key={user.id} value={user.name}>
+          {user.name} ({user.email})
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  <Button
+    type="button"
+    onClick={addTeamMember}
+    className="mt-2"
+  >
+    <Plus className="w-4 h-4 mr-1" />
+    Add
+  </Button>
+</div>
+
+
+                  {projectData.teamMembers.length > 0 && (
+                    <div className="space-y-2">
+                      {projectData.teamMembers.map((member) => (
+                        <div key={member} className="flex items-center justify-between p-2 bg-muted rounded">
+                          <span>{member}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeTeamMember(member)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* External Links */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>External Links</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">GitHub Repository</label>
+                    <Input
+                      placeholder="https://github.com/username/repository"
+                      value={projectData.githubLink}
+                      onChange={(e) => setProjectData(prev => ({ ...prev, githubLink: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Live Demo</label>
+                    <Input
+                      placeholder="https://your-demo-site.com"
+                      value={projectData.demoLink}
+                      onChange={(e) => setProjectData(prev => ({ ...prev, demoLink: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Research Paper / Documentation</label>
+                    <Input
+                      placeholder="https://link-to-paper.com"
+                      value={projectData.researchPaper}
+                      onChange={(e) => setProjectData(prev => ({ ...prev, researchPaper: e.target.value }))}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* File Upload Sidebar */}
+            <div className="space-y-6">
+              {/* Project Files */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Files</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+                      }`}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={(e) => handleDrop(e, 'files')}
+                  >
+                    <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Drop files here or click to browse
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => handleFileInput(e, 'files')}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
+                      Choose Files
+                    </Button>
+                  </div>
+
+                  {uploadedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-medium">Uploaded Files ({uploadedFiles.length})</p>
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                          <div className="flex items-center space-x-2">
+                            {getFileIcon(file.name)}
+                            <span className="truncate">{file.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index, 'files')}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Screenshots */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Screenshots</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+                      }`}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={(e) => handleDrop(e, 'screenshots')}
+                  >
+                    <ImageIcon className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Drop images here or click to browse
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleFileInput(e, 'screenshots')}
+                      className="hidden"
+                      id="screenshot-upload"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('screenshot-upload')?.click()}
+                    >
+                      Choose Images
+                    </Button>
+                  </div>
+
+                  {screenshots.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-medium">Screenshots ({screenshots.length})</p>
+                      {screenshots.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                          <div className="flex items-center space-x-2">
+                            <ImageIcon className="w-4 h-4" />
+                            <span className="truncate">{file.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index, 'screenshots')}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Preview */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Preview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    {getVisibilityIcon(projectData.visibility)}
+                    <span className="text-sm font-medium">{projectData.visibility}</span>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-muted-foreground">Subject</p>
+                    <p className="font-medium">{projectData.subject || 'Not selected'}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-muted-foreground">Tags</p>
+                    <p className="text-sm">{projectData.tags.length} tags added</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-muted-foreground">Team</p>
+                    <p className="text-sm">{projectData.teamMembers.length + 1} members</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-muted-foreground">Files</p>
+                    <p className="text-sm">{uploadedFiles.length + screenshots.length} files</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Submit Buttons */}
+          <div className="flex justify-end space-x-4 pt-6 border-t">
+            <Button type="button" variant="outline" asChild>
+              <Link to="/projects">Cancel</Link>
+            </Button>
+            <Button type="submit" className="px-8">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Project
+            </Button>
+          </div>
+        </form>
+      </main>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default ProjectUpload;
