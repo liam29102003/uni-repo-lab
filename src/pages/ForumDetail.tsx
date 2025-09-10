@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+
+
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,186 +15,144 @@ import {
   Send,
   Eye,
   Calendar,
-  User,
-  Award,
   BookOpen
 } from 'lucide-react';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
+import { toast } from 'sonner';
+import CommentComp from '@/components/CommentComp';
 
 const ForumDetail: React.FC = () => {
   const { id } = useParams();
+  const user_id = localStorage.getItem("user_object_id")
   const [newAnswer, setNewAnswer] = useState('');
-  const [answers, setAnswers] = useState([
-    {
-      id: '1',
-      author: 'Dr. Sarah Wilson',
-      avatar: '/placeholder.svg',
-      university: 'MIT',
-      role: 'Professor',
-      reputation: 2450,
-      content: `Great question! Neural networks can indeed be used for time series forecasting, and they're particularly effective for complex patterns. Here's what you need to consider:
+  const [question, setQuestion] = useState<any>(null);
+  const [answers, setAnswers] = useState<any[]>([]);
 
-1. **LSTM Networks**: Long Short-Term Memory networks are specifically designed for sequential data and can capture long-term dependencies in your time series.
+  const [questionVoters, setQuestionVoters] = useState<any[]>([]);
+  const [answerVoters, setAnswerVoters] = useState<any[]>([]);
 
-2. **Data Preprocessing**: Make sure to normalize your data and create appropriate sliding windows for training.
+  // const mockUser = {
+  //   name: 'John Doe',
+  //   email: 'john.doe@university.edu',
+  //   role: 'student' as const
+  // };
 
-3. **Architecture**: Start with a simple LSTM layer followed by dense layers. You can experiment with multiple LSTM layers for more complex patterns.
+  function getUserVoteOnQuestion(userId: string): number | undefined {
+    
+    const voter = questionVoters.find(v => v.userId === userId);
+    return voter ? voter.vote : undefined;
+  }
 
-Here's a basic implementation structure:
-\`\`\`python
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
+  function getUserVoteOnAnswer(userId: string, answerId: string): number | undefined {
+    const voter = answerVoters.find(v => v.userId === userId && v.answerId === answerId);
+    console.log(voter)
+    return voter ? voter.vote : undefined;
+  }
 
-model = Sequential([
-    LSTM(50, return_sequences=True, input_shape=(timesteps, features)),
-    Dropout(0.2),
-    LSTM(50, return_sequences=False),
-    Dropout(0.2),
-    Dense(25),
-    Dense(1)
-])
-\`\`\`
+  const fetchData = async () => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/questions/${id}`);
+      const data = await res.json();
+      setQuestion(data.question);
+      setAnswers(data.answers);
+       // Flatten all voters from answers
+      const answerVoters = data.answers.flatMap((ans: any) => 
+        (ans.voters || []).map(v => ({
+          answerId: ans._id,
+          userId: v.userId,
+          vote: v.vote
+        }))
+      );
+      console.log(answerVoters)
 
-The key is to experiment with different architectures and hyperparameters based on your specific dataset.`,
-      createdAt: '2024-01-20',
-      upvotes: 23,
-      downvotes: 1,
-      hasUpvoted: false,
-      hasDownvoted: false
-    },
-    {
-      id: '2',
-      author: 'Alex Chen',
-      avatar: '/placeholder.svg',
-      university: 'Stanford',
-      role: 'PhD Student',
-      reputation: 856,
-      content: `I've worked extensively with time series prediction using neural networks. While Dr. Wilson's answer is excellent, I'd like to add a few practical tips:
-
-- **Feature Engineering**: Don't forget to include relevant features like seasonality indicators, rolling averages, and lag features.
-- **Validation Strategy**: Use time-based cross-validation rather than random splits to avoid data leakage.
-- **Ensemble Methods**: Consider combining LSTM with other models like ARIMA or Prophet for better robustness.
-
-Also, transformers are becoming increasingly popular for time series forecasting. Check out papers on "Temporal Fusion Transformers" if you're interested in cutting-edge approaches.`,
-      createdAt: '2024-01-21',
-      upvotes: 15,
-      downvotes: 0,
-      hasUpvoted: true,
-      hasDownvoted: false
+    setAnswerVoters(answerVoters);
+    setQuestionVoters(data.question.voters || []);
+      console.log(data)
+    } catch (err) {
+      console.error('Failed to fetch question detail:', err);
     }
-  ]);
-
-  const mockUser = {
-    name: 'John Doe',
-    email: 'john.doe@university.edu',
-    role: 'student' as const
   };
 
-  const mockQuestion = {
-    id: id,
-    title: 'How to implement neural networks for time series forecasting in Python?',
-    content: `I'm working on a project that involves predicting stock prices using historical data, and I've been reading about neural networks for time series forecasting. 
+  const updateViewCount = async() =>{
+    try {
+      await fetch(`http://localhost:8000/api/questions/${id}/view`, {
+        method: "PATCH"
+      });
+    } catch (err) {
+      console.error("Failed to increment view count:", err);
+    }
+  }
 
-I have a dataset with daily stock prices for the past 5 years, including features like:
-- Open, High, Low, Close prices
-- Trading volume
-- Various technical indicators (RSI, MACD, etc.)
+  useEffect(() => {
+    fetchData();
+    updateViewCount()
+  }, [id]);
 
-My questions are:
-1. What type of neural network architecture would be most suitable for this task?
-2. How should I structure my input data for training?
-3. What are the key preprocessing steps I should consider?
-4. How do I handle the temporal dependencies in the data?
-
-I'm using Python with TensorFlow/Keras. Any code examples or resources would be greatly appreciated!
-
-**Background**: I'm a Computer Science student with basic knowledge of machine learning, but this is my first deep dive into time series analysis.`,
-    author: 'Mike Rodriguez',
-    avatar: '/placeholder.svg',
-    university: 'UC Berkeley',
-    year: '3rd Year',
-    reputation: 234,
-    tags: ['Python', 'Neural Networks', 'Time Series', 'TensorFlow', 'Machine Learning'],
-    visibility: 'Public',
-    views: 1847,
-    upvotes: 34,
-    downvotes: 2,
-    createdAt: '2024-01-19',
-    hasUpvoted: false,
-    hasDownvoted: false
-  };
-
-  const handleUpvote = (answerId: string) => {
-    setAnswers(prev => prev.map(answer => {
-      if (answer.id === answerId) {
-        if (answer.hasUpvoted) {
-          return { ...answer, upvotes: answer.upvotes - 1, hasUpvoted: false };
-        } else {
-          return {
-            ...answer,
-            upvotes: answer.upvotes + 1,
-            downvotes: answer.hasDownvoted ? answer.downvotes - 1 : answer.downvotes,
-            hasUpvoted: true,
-            hasDownvoted: false
-          };
-        }
-      }
-      return answer;
-    }));
-  };
-
-  const handleDownvote = (answerId: string) => {
-    setAnswers(prev => prev.map(answer => {
-      if (answer.id === answerId) {
-        if (answer.hasDownvoted) {
-          return { ...answer, downvotes: answer.downvotes - 1, hasDownvoted: false };
-        } else {
-          return {
-            ...answer,
-            downvotes: answer.downvotes + 1,
-            upvotes: answer.hasUpvoted ? answer.upvotes - 1 : answer.upvotes,
-            hasDownvoted: true,
-            hasUpvoted: false
-          };
-        }
-      }
-      return answer;
-    }));
-  };
-
-  const handleSubmitAnswer = () => {
-    if (newAnswer.trim()) {
-      const answer = {
-        id: Date.now().toString(),
-        author: mockUser.name,
-        avatar: '/placeholder.svg',
-        university: 'Current University',
-        role: 'Student',
-        reputation: 120,
-        content: newAnswer,
-        createdAt: new Date().toISOString().split('T')[0],
-        upvotes: 0,
-        downvotes: 0,
-        hasUpvoted: false,
-        hasDownvoted: false
+  const handleSubmitAnswer = async () => {
+    try {
+      const payload = {
+        questionId: id,
+        answeredBy: user_id, // change later 
+        body: newAnswer
       };
-      setAnswers(prev => [...prev, answer]);
+      const res = await fetch(`http://localhost:8000/api/questions/save_answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      toast(data?.message || 'Answer submitted');
       setNewAnswer('');
+      fetchData();
+    } catch (err) {
+      console.error('Failed to submit answer:', err);
     }
   };
 
-  const getReputationBadge = (reputation: number) => {
-    if (reputation > 2000) return { text: 'Expert', color: 'bg-purple-100 text-purple-700 border-purple-200' };
-    if (reputation > 1000) return { text: 'Advanced', color: 'bg-blue-100 text-blue-700 border-blue-200' };
-    if (reputation > 500) return { text: 'Intermediate', color: 'bg-green-100 text-green-700 border-green-200' };
-    return { text: 'Beginner', color: 'bg-gray-100 text-gray-700 border-gray-200' };
-  };
+
+  // vote: 1 (upvote) or -1 (downvote)
+  async function saveVote(questionId: any, userId: any, vote: any) {
+    try {
+      const res = await fetch(`http://localhost:8000/api/questions/vote/${questionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, vote }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Failed to save vote");
+      }
+      const data = await res.json();
+      toast(data?.message || 'Vote saved');
+      fetchData();
+    } catch (error: any) {
+      console.error("Error saving vote:", error.message);
+    }
+  }
+
+  async function saveAnswerVote(answerId: any, userId: any, vote: any) {
+    try {
+      const res = await fetch(`http://localhost:8000/api/questions/answers/${answerId}/vote?user_id=${userId}&vote=${vote}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, vote }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Failed to save vote");
+      }
+      const data = await res.json();
+      toast(data?.message || 'Vote saved');
+      fetchData();
+    } catch (error: any) {
+      console.error("Error saving vote:", error.message);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header user={mockUser} />
-      
+      {/* <Header user={mockUser} /> */}
       <main className="container mx-auto px-4 py-8">
         {/* Back Navigation */}
         <div className="mb-6">
@@ -212,154 +172,168 @@ I'm using Python with TensorFlow/Keras. Any code examples or resources would be 
               <CardHeader className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                    {mockQuestion.visibility}
+                    {question?.visibility}
                   </Badge>
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Eye className="w-4 h-4" />
-                      <span>{mockQuestion.views}</span>
+                      <span>{question?.views+1}</span>
                     </div>
-                    <div className="flex items-center space-x-1">
+                    {
+
+                    }
+                    <div className={`flex items-center space-x-1 `}>
                       <ArrowUp className="w-4 h-4" />
-                      <span>{mockQuestion.upvotes}</span>
+                      <span>{question?.upvotes}</span>
+                    </div>
+                    <div className={`flex items-center space-x-1 `}>
+                      <ArrowDown className="w-4 h-4" />
+                      <span>{question?.downvotes}</span>
                     </div>
                   </div>
                 </div>
                 
                 <h1 className="text-2xl font-bold text-foreground">
-                  {mockQuestion.title}
+                  {question?.title}
                 </h1>
 
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-3">
                     <Avatar>
-                      <AvatarImage src={mockQuestion.avatar} />
-                      <AvatarFallback>{mockQuestion.author.charAt(0)}</AvatarFallback>
+                      <AvatarImage src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSW_PQ8BnjD0vx3F_kX0ekjJQePDXzTBGz5mA&s" />
+                      <AvatarFallback>{question?.askedByUser?.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold">{mockQuestion.author}</p>
-                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <BookOpen className="w-4 h-4" />
-                        <span>{mockQuestion.university}</span>
-                        <span>•</span>
-                        <span>{mockQuestion.year}</span>
+                      <p className="font-semibold">{question?.askedByUser?.name}</p>
+                      <div className="flex gap-5">
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <BookOpen className="w-4 h-4" />
+                          <span>{question?.university}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4" />
+                          <span>{new Date(question?.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(mockQuestion.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {mockQuestion.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                    </Badge>
+                  {question?.tags?.map((tag) => (
+                    <Badge key={tag} variant="secondary">{tag}</Badge>
                   ))}
                 </div>
               </CardHeader>
 
               <CardContent>
                 <div className="prose max-w-none text-academic">
-                  {mockQuestion.content.split('\n').map((paragraph, index) => (
-                    <p key={index} className="mb-4 leading-relaxed">
-                      {paragraph}
-                    </p>
+                  {question?.content?.split('\n').map((paragraph: string, index: number) => (
+                    <p key={index} className="mb-4 leading-relaxed">{paragraph}</p>
                   ))}
                 </div>
 
                 {/* Question Actions */}
                 <div className="flex items-center space-x-4 mt-6 pt-4 border-t">
                   <div className="flex items-center space-x-2">
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant={question?.hasUpvoted ? "default" : "outline"}
+                      onClick={() => saveVote(question?._id, user_id, 1)}
+                      className={`${getUserVoteOnQuestion(user_id) == 1 && 'bg-blue-200' }`}
+                    >
                       <ArrowUp className="w-4 h-4" />
                     </Button>
-                    <span className="font-semibold">{mockQuestion.upvotes - mockQuestion.downvotes}</span>
-                    <Button size="sm" variant="outline">
+                    <span className="font-semibold">{question?.upvotes}</span>
+
+                    <Button
+                      size="sm"
+                      variant={question?.hasDownvoted ? "default" : "outline"}
+                      onClick={() => saveVote(question?._id, user_id, -1)}
+                      className={`${getUserVoteOnQuestion(user_id) == -1 && 'bg-blue-200' }`}
+                    >
                       <ArrowDown className="w-4 h-4" />
                     </Button>
+                    <span className="font-semibold">{question?.downvotes}</span>
                   </div>
                   <div className="flex items-center space-x-1 text-muted-foreground">
                     <MessageSquare className="w-4 h-4" />
-                    <span>{answers.length} answers</span>
+                    <span>{answers?.length} answers</span>
                   </div>
+                  <CommentComp parentId={id} parentType={"question"}/>
                 </div>
               </CardContent>
             </Card>
+
 
             {/* Answers */}
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">
-                  {answers.length} Answer{answers.length !== 1 ? 's' : ''}
+                  {answers?.length} Answer{answers?.length !== 1 ? 's' : ''}
                 </h2>
               </div>
 
-              {answers.map((answer) => {
-                const reputationBadge = getReputationBadge(answer.reputation);
+              {answers?.map((answer) => {
+                // const reputationBadge = getReputationBadge(answer?.reputation);
                 return (
-                  <Card key={answer.id} className="border-l-2 border-l-muted">
+                  <Card key={answer?._id} className="border-l-2 border-l-muted">
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
                           <Avatar>
-                            <AvatarImage src={answer.avatar} />
-                            <AvatarFallback>{answer.author.charAt(0)}</AvatarFallback>
+                            <AvatarImage src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnFRPx77U9mERU_T1zyHcz9BOxbDQrL4Dvtg&s" />
+                            <AvatarFallback>{answer?.answeredByUser?.name.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <p className="font-semibold">{answer.author}</p>
-                              <Badge variant="outline" className={reputationBadge.color}>
-                                <Award className="w-3 h-3 mr-1" />
-                                {reputationBadge.text}
-                              </Badge>
+                              <p className="font-semibold">{answer?.answeredByUser?.name}</p>
                             </div>
                             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                              <span>{answer.role}</span>
+                              <span>Student</span>
                               <span>•</span>
                               <BookOpen className="w-4 h-4" />
-                              <span>{answer.university}</span>
-                              <span>•</span>
-                              <span>{answer.reputation} rep</span>
+                              <span>{answer?.answeredByUser?.university}</span>
                             </div>
                           </div>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {new Date(answer.createdAt).toLocaleDateString()}
+                          {new Date(answer?.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </CardHeader>
 
                     <CardContent>
                       <div className="prose max-w-none text-academic mb-4">
-                        {answer.content.split('\n').map((paragraph, index) => (
-                          <p key={index} className="mb-3 leading-relaxed">
-                            {paragraph}
-                          </p>
+                        {answer?.body.split('\n').map((paragraph, index) => (
+                          <p key={index} className="mb-3 leading-relaxed">{paragraph}</p>
                         ))}
                       </div>
 
                       {/* Answer Actions */}
                       <div className="flex items-center space-x-4 pt-4 border-t">
                         <div className="flex items-center space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant={answer.hasUpvoted ? "default" : "outline"}
-                            onClick={() => handleUpvote(answer.id)}
+                          <Button
+                            size="sm"
+                            variant={answer?.hasUpvoted ? "default" : "outline"}
+                            onClick={() => saveAnswerVote(answer?._id, user_id, 1)}
+                            className={`${getUserVoteOnAnswer(user_id,answer?._id) == 1 && 'bg-blue-200' }`}
                           >
                             <ArrowUp className="w-4 h-4" />
                           </Button>
-                          <span className="font-semibold">{answer.upvotes - answer.downvotes}</span>
-                          <Button 
-                            size="sm" 
-                            variant={answer.hasDownvoted ? "default" : "outline"}
-                            onClick={() => handleDownvote(answer.id)}
+                          <span className="font-semibold">{answer?.upvotes}</span>
+
+                          <Button
+                            size="sm"
+                            variant={answer?.hasDownvoted ? "default" : "outline"}
+                            onClick={() => saveAnswerVote(answer?._id, user_id, -1)}
+                            className={`${getUserVoteOnAnswer(user_id,answer?._id) == -1 && 'bg-blue-200' }`}
                           >
                             <ArrowDown className="w-4 h-4" />
                           </Button>
+                          <span className="font-semibold">{answer?.downvotes}</span>
                         </div>
+                        <CommentComp parentId={answer?._id} parentType={"answer"}/>
                       </div>
                     </CardContent>
                   </Card>
@@ -402,11 +376,11 @@ I'm using Python with TensorFlow/Keras. Any code examples or resources would be 
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Asked</span>
-                  <span>{new Date(mockQuestion.createdAt).toLocaleDateString()}</span>
+                  <span>{new Date(question?.createdAt).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Viewed</span>
-                  <span>{mockQuestion.views} times</span>
+                  <span>{question?.views+1} times</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Active</span>
@@ -414,13 +388,13 @@ I'm using Python with TensorFlow/Keras. Any code examples or resources would be 
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Answers</span>
-                  <span>{answers.length}</span>
+                  <span>{answers?.length}</span>
                 </div>
               </CardContent>
             </Card>
 
             {/* Related Questions */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <h3 className="font-semibold">Related Questions</h3>
               </CardHeader>
@@ -446,7 +420,7 @@ I'm using Python with TensorFlow/Keras. Any code examples or resources would be 
                   </Link>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Tags */}
             <Card>
@@ -455,7 +429,7 @@ I'm using Python with TensorFlow/Keras. Any code examples or resources would be 
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {mockQuestion.tags.map((tag) => (
+                  {question?.tags?.map((tag) => (
                     <Badge key={tag} variant="secondary" className="cursor-pointer hover:bg-secondary/80">
                       {tag}
                     </Badge>
@@ -466,7 +440,6 @@ I'm using Python with TensorFlow/Keras. Any code examples or resources would be 
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
   );
