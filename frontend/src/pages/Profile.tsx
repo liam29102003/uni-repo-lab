@@ -227,11 +227,11 @@ const Profile: React.FC = () => {
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <Card className="p-6 mb-8">
+          <Card className="p-6 mb-8 bg-blue-100 shadow-lg">
             <div className="flex flex-col md:flex-row gap-6">
               {/* Avatar */}
-              <div className="relative">
-                <Avatar className="w-32 h-32">
+              <div className="relative ">
+                <Avatar className="w-32 h-32 border-2 border-blue-400 rounded-full ">
                   <AvatarImage src={formData.profile_preview} alt={user.username} />
                   <AvatarFallback>{user.username.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                 </Avatar>
@@ -266,7 +266,7 @@ const Profile: React.FC = () => {
                     variant={isEditing ? "default" : "outline"}
                     onClick={async () => isEditing ? await handleSubmit() : setIsEditing(true)}
                   >
-                    {isEditing ? <><Save className="w-4 h-4 mr-2" /> Save</> : <><Edit className="w-4 h-4 mr-2" /> Edit Profile</>}
+                    {isEditing ? <><Save className="w-4 h-4 mr-2" /> Save</> : <><Edit className="w-4 h-4 mr-2 " /> Edit Profile</>}
                   </Button>
                 </div>
                 <div>
@@ -324,8 +324,8 @@ const Profile: React.FC = () => {
 
           {/* Tabs */}
            {/* Profile Tabs */}
-          <Tabs defaultValue="projects" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs defaultValue="projects" className="w-full ">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-400">
               <TabsTrigger value="projects" className="flex items-center gap-2">
                 <FolderOpen className="w-4 h-4" />
                 Projects ({mockProjects.length})
