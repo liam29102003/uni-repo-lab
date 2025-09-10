@@ -12,17 +12,30 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({
     universities: 0,
     students: 0,
-    projects: 0,
     pending_requests: 0,
   });
+  const [totalProjects, setTotalProjects] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/dashboard/stats");
-        const data = await res.json();
-        setStats(data);
+        // Fetch other dashboard stats
+        const dashboardRes = await fetch(
+          "http://127.0.0.1:8000/dashboard/stats",
+        );
+        const dashboardData = await dashboardRes.json();
+        setStats({
+          universities: dashboardData.universities,
+          students: dashboardData.students,
+          pending_requests: dashboardData.pending_requests,
+        });
+
+        // Fetch total projects from /projects
+        const projectsRes = await fetch("http://127.0.0.1:8090/projects/");
+        const projectsData = await projectsRes.json();
+        const total = projectsData?.pagination?.total || 0;
+        setTotalProjects(total);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       } finally {
@@ -76,7 +89,7 @@ const AdminDashboard = () => {
               <p className="text-sm font-medium text-muted-foreground">
                 Projects
               </p>
-              <p className="text-2xl font-bold">{stats.projects}</p>
+              <p className="text-2xl font-bold">{totalProjects}</p>
             </div>
             <FolderOpen className="w-8 h-8 text-primary" />
           </div>
