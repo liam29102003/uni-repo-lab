@@ -32,16 +32,13 @@ const AskQuestion: React.FC = () => {
     content: '',
     tags: [] as string[],
     visibility: 'Public',
-    category: ''
+    category: '',
+    askedBy:'',
+    university:""
   });
+
   
   const [newTag, setNewTag] = useState('');
-
-  const mockUser = {
-    name: 'John Doe',
-    email: 'john.doe@university.edu',
-    role: 'student' as const
-  };
 
   const categories = [
     'Computer Science',
@@ -83,11 +80,47 @@ const AskQuestion: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log('Question Data:', questionData);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  // questionData.askedBy = JSON.parse(localStorage.getItem('userInfo'))._id || "66ccf4a1a4d8c2b567890456"
+  //  questionData.askedBy = "66ccf4a1a4d8c2b567890456",
+  questionData.askedBy =localStorage.getItem('user_object_id'),
+   questionData.university = JSON.parse(localStorage.getItem('user')).university,
+   console.log(questionData)
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/questions/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(questionData),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to post question");
+    }
+
+    const data = await res.json();
+    console.log("Question saved:", data);
+
+    // Optionally reset form
+    setQuestionData({
+      title: "",
+      content: "",
+      tags: [],
+      visibility: "Public",
+      category: "",
+      askedBy:'',
+      university:""
+    });
+
+    alert("Your question has been posted successfully!");
+  } catch (error) {
+    console.error("Error posting question:", error);
+    alert("Something went wrong. Please try again.");
+  }
+};
+
 
   const getVisibilityIcon = (visibility: string) => {
     switch (visibility) {
@@ -102,7 +135,7 @@ const AskQuestion: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header user={mockUser} />
+      {/* <Header user={mockUser} /> */}
       
       <main className="container mx-auto px-4 py-8">
         {/* Back Navigation */}
@@ -287,6 +320,33 @@ const AskQuestion: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+
+                        {/* Project Id  */}
+               {/* <Card>
+                <CardHeader>
+                  <CardTitle>Project</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Category</label>
+                      <Select value={questionData.category} onValueChange={(value) => 
+                        setQuestionData(prev => ({ ...prev, category: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card> */}
             </div>
 
             {/* Sidebar */}
