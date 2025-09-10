@@ -61,11 +61,55 @@ const Projects: React.FC = () => {
   };
 
   // Check if user owns the project (simplified logic)
-  const isProjectOwner = (project: any) => {
+  const isProjectOwner = (project: any): boolean => {
+    const storedUser = localStorage.getItem("user");
+    console.log("Stored user from localStorage:", storedUser);
+    if (!storedUser || !project?.team) return false;
 
-    console.log('Checking ownership for project:', project.team.includes('Sarah Johnson'));
-    // return project.team.includes('Sarah Johnson'); // Mock logic - in real app would check actual ownership
-    return true
+    try {
+      const user = JSON.parse(storedUser); // { _id, name, ... }
+
+      // Check if user is in the team as Owner
+      const owner = project.team.find(
+        (member: any) => member._id === user.user_id && member.role.toLowerCase() === "owner"
+      );
+
+      return !!owner;
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+      return false;
+    }
+  };
+
+  const canViewProject = (project: any): boolean => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return false;
+
+    try {
+      const user = JSON.parse(storedUser);
+
+      if (project.visibility === "Public") {
+        return true;
+      }
+
+      // ✅ allow if private but same university
+      if (
+        project.visibility === "Private" &&
+        user.university?.toLowerCase() === project.university?.toLowerCase()
+      ) {
+        return true;
+      }
+
+      // ✅ allow if owner
+      if (isProjectOwner(project)) {
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error("Error parsing user from localStorage:", err);
+      return false;
+    }
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -174,7 +218,7 @@ const Projects: React.FC = () => {
     const fetchTechnologies = async () => {
       try {
         const res = await axios.get('http://localhost:8090/tags'); // your API endpoint
-            // console.log(Array.isArray(res.data.tags));
+        // console.log(Array.isArray(res.data.tags));
 
         if (res.data && Array.isArray(res.data.tags)) {
           console.log('Fetched technologies from API:', res.data.tags);
@@ -346,114 +390,153 @@ const Projects: React.FC = () => {
             : 'grid-cols-1'
             }`}
           >
-            {projects.map((project) => (
-              <Card key={project.id} className="project-card group hover:scale-102">
-                <CardHeader className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <Badge
-                      variant="outline"
-                      className={`${getVisibilityColor(project.visibility)} font-medium`}
-                    >
-                      {project.visibility}
-                    </Badge>
-                    <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-1">
-                        <Eye className="w-4 h-4" />
-                        <span>{project.views}</span>
+            {projects.map((project) =>
+              canViewProject(project) && (
+                <Card key={project.id} className="project-card group hover:scale-102 relative">
+                  {/* 👇 highlight if owner */}
+                  {isProjectOwner(project) && (
+                    <div className="absolute top-2 right-2">
+                      <Badge
+                        variant="secondary"
+                        className="bg-primary text-white text-xs font-semibold shadow-md"
+                      >
+                        Owner
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* 👇 highlight if private + same university */}
+                  {!isProjectOwner(project) &&
+                    project.visibility === "Private" && (
+                      <div className="absolute top-2 right-2">
+                        <Badge
+                          variant="outline"
+                          className="bg-muted text-xs font-medium shadow"
+                        >
+                          Same University
+                        </Badge>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4" />
-                        <span>{project.stars}</span>
+                    )}
+
+                  <CardHeader className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <Badge
+                        variant="outline"
+                        className={`${getVisibilityColor(project.visibility)} font-medium`}
+                      >
+                        {project.visibility}
+                      </Badge>
+                      <div className="flex items-center space-x-3 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <Eye className="w-4 h-4" />
+                          <span>{project.views}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-4 h-4" />
+                          <span>{project.stars}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
-                    {project.title}
-                  </h3>
+                    <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {project.title}
+                    </h3>
 
-                  <p className={`text-academic ${viewMode === 'grid' ? 'line-clamp-3' : 'line-clamp-2'}`}>
-                    {project.description}
-                  </p>
-                </CardHeader>
+                    <p
+                      className={`text-academic ${viewMode === "grid" ? "line-clamp-3" : "line-clamp-2"
+                        }`}
+                    >
+                      {project.description}
+                    </p>
+                  </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <BookOpen className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-foreground">{project.university}</span>
-                  </div>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">
+                        {project.university}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      {project.team.slice(0, 2).map(member => member.name).join(', ')}
-                      {project.team.length > 2 && ` +${project.team.length - 2} more`}
-                    </span>
-                  </div>
+                    <div className="flex items-center space-x-2">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {project.team.slice(0, 2).map((member) => member.name).join(", ")}
+                        {project.team.length > 2 && ` +${project.team.length - 2} more`}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(project.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  </div>
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(project.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {project.tags.slice(0, 4).map((tag: string) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {project.tags.length > 4 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{project.tags.length - 4}
-                      </Badge>
-                    )}
-                  </div>
+                    <div className="flex flex-wrap gap-2">
+                      {project.tags.slice(0, 4).map((tag: string) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {project.tags.length > 4 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{project.tags.length - 4}
+                        </Badge>
+                      )}
+                    </div>
 
-                  <div className="flex items-center space-x-2 pt-2">
-                    <Button size="sm" variant="outline" className="flex-1" asChild>
-                      <Link to={`/projects/${project.id}`}>
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        View Details
-                      </Link>
-                    </Button>
-                    <Button size="sm" variant="ghost" className="px-3">
-                      <Github className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Button size="sm" variant="outline" className="flex-1" asChild>
+                        <Link to={`/projects/${project.id}`}>
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          View Details
+                        </Link>
+                      </Button>
+                      <Button size="sm" variant="ghost" className="px-3">
+                        <Github className="w-4 h-4" />
+                      </Button>
 
-                    {isProjectOwner(project) && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="sm" variant="ghost" className="px-3">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-background border shadow-md">
-                          <DropdownMenuItem asChild>
-                            <Link to={`/projects/${project.id}/edit`} className="flex items-center">
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit Project
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteProject(project.id)}
-                            className="text-destructive focus:text-destructive"
+                      {isProjectOwner(project) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="ghost" className="px-3">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-background border shadow-md"
                           >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Project
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                            <DropdownMenuItem asChild>
+                              <Link
+                                to={`/projects/${project.id}/edit`}
+                                className="flex items-center"
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit Project
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteProject(project.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete Project
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            )}
+
           </div>
         )}
 

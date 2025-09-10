@@ -90,11 +90,12 @@ const Login: React.FC = () => {
         params.toString(),
         { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
       );
-
+      console.log(response.data.user)
       const { access_token } = response.data as { access_token: string };
       // Save access token
       localStorage.setItem("access_token", access_token);
-      console.log("Login response:", response.data);
+      localStorage.setItem("user_object_id", response?.data?.user?._id)
+      // console.log("Login response:", response.data.user);
 
 
       // 2️⃣ Get current user info

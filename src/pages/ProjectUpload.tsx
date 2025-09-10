@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,35 +32,48 @@ import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 
 const ProjectUpload: React.FC = () => {
+
+  type User = {
+    user_id: string;
+    username: string;
+    email: string;
+    role: string;
+  };
+
   const [projectData, setProjectData] = useState({
     title: '',
     description: '',
     subject: '',
     visibility: 'Public',
     tags: [] as string[],
-    teamMembers: [] as string[],
+    teamMembers: [] as User[], // 👈 use strong typing
     githubLink: '',
     demoLink: '',
     researchPaper: ''
   });
 
+
   const [newTag, setNewTag] = useState('');
-  const [newTeamMember, setNewTeamMember] = useState('');
+  const [users, setUsers] = useState([]);
+  // const [newTeamMember, setNewTeamMember] = useState("");
+  const [newTeamMember, setNewTeamMember] = useState<User | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [screenshots, setScreenshots] = useState<File[]>([]);
+  const [search, setSearch] = useState("");
 
   const mockUser = {
+
     name: 'John Doe',
     email: 'john.doe@university.edu',
     role: 'student' as const
   };
 
   const mockUsers = [
-  { id: '1', name: 'John Doe', email: 'john.doe@university.edu' },
-  { id: '2', name: 'Jane Smith', email: 'jane.smith@university.edu' },
-  { id: '3', name: 'Alice Johnson', email: 'alice.johnson@university.edu' },
-];
+    { id: '1', name: 'John Doe', email: 'john.doe@university.edu' },
+    { id: '2', name: 'Jane Smith', email: 'jane.smith@university.edu' },
+    { id: '3', name: 'Alice Johnson', email: 'alice.johnson@university.edu' },
+  ];
 
 
   const subjects = [
@@ -128,25 +141,73 @@ const ProjectUpload: React.FC = () => {
     }));
   };
 
+  async function getUsers() {
+    const url = "http://localhost:8080/api/v1/users/users/basic";
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch users");
+      const users = await response.json();
+      return users; // list of user objects
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const data = await getUsers(); // your remembered API call
+        // Map API users → add role: "member"
+        const withRoles = data.map((u: Omit<User, "role">) => ({
+          ...u,
+          role: "member",
+        }));
+        setUsers(withRoles);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    }
+    fetchUsers();
+  }, []);
+
+  // Filter by username/email
+  const filteredUsers = users.filter(
+    (user) =>
+      user.username.toLowerCase().includes(search.toLowerCase()) ||
+      user.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Add member
   const addTeamMember = () => {
   if (
     newTeamMember &&
-    !projectData.teamMembers.includes(newTeamMember)
+    !projectData.teamMembers.some((m: any) => m.user_id === newTeamMember.user_id)
   ) {
-    setProjectData((prev) => ({
-      ...prev,
-      teamMembers: [...prev.teamMembers, newTeamMember],
-    }));
-    setNewTeamMember('');
+    setProjectData({
+      ...projectData,
+      teamMembers: [
+        ...projectData.teamMembers,
+        {
+          user_id: newTeamMember.user_id,
+          username: newTeamMember.username,
+          email: newTeamMember.email,
+          role: "member", // always member for now
+        },
+      ],
+    });
+    setNewTeamMember(null);
+    setSearch("");
   }
 };
 
 
-  const removeTeamMember = (memberToRemove: string) => {
-    setProjectData(prev => ({
-      ...prev,
-      teamMembers: prev.teamMembers.filter(member => member !== memberToRemove)
-    }));
+  // Remove member
+  const removeTeamMember = (userId: string) => {
+    setProjectData({
+      ...projectData,
+      teamMembers: projectData.teamMembers.filter((m: User) => m.user_id !== userId),
+    });
   };
 
   const getFileIcon = (fileName: string) => {
@@ -187,81 +248,99 @@ const ProjectUpload: React.FC = () => {
     }
   };
 
+  const getUploader = (): { _id: string; name: string; email: string; role: string } | null => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return null;
+
+    try {
+      const user = JSON.parse(storedUser);
+      return {
+        _id: user.user_id,
+        name: user.username, // or user.name depending on your stored object
+        email: user.email,
+        role: "Owner"         // fixed or dynamic if needed
+      };
+    } catch (err) {
+      console.error("Failed to parse user from localStorage:", err);
+      return null;
+    }
+  };
+
+
+
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const formData = new FormData();
 
-    // Basic info
-    formData.append("title", projectData.title);
-    formData.append("description", projectData.description);
-    formData.append("subject", projectData.subject);
-    formData.append("visibility", projectData.visibility);
-    formData.append("tags", JSON.stringify(projectData.tags));
-    formData.append("university", "Example University"); // Replace with actual university from user context
+    try {
+      const formData = new FormData();
+      
 
-    // Team members — always include current user
-    const uploader = {
-      name: mockUser.name,
-      email: mockUser.email,
-      role: "Owner",
-      avatar: "/placeholder.svg"
-    };
+      // Basic info
+      formData.append("title", projectData.title);
+      formData.append("description", projectData.description);
+      formData.append("subject", projectData.subject);
+      formData.append("visibility", projectData.visibility);
+      formData.append("tags", JSON.stringify(projectData.tags));
+      formData.append("university", "Example University"); // Replace with actual university from user context
 
-    const teamArray = [uploader, ...projectData.teamMembers.map((name) => ({
-      name,
-      role: "Member",
-      avatar: "/placeholder.svg",
-    }))];
+      // Team members — always include current user
+      const uploader = getUploader();
 
-    formData.append("team", JSON.stringify(teamArray));
 
-    // Links
-    const links = [
-      { name: "GitHub Repository", url: projectData.githubLink },
-      { name: "Live Demo", url: projectData.demoLink },
-      { name: "Research Paper", url: projectData.researchPaper },
-    ];
-    formData.append("links", JSON.stringify(links));
+      const teamArray = [uploader, ...projectData.teamMembers.map((name) => ({
+        name,
+        role: "Member",
+        avatar: "/placeholder.svg",
+      }))];
 
-    // Files
-    uploadedFiles.forEach((file) => formData.append("files", file));
-    screenshots.forEach((file) => formData.append("screenshots", file));
+      formData.append("team", JSON.stringify(teamArray));
 
-    // Call backend API
-    const response = await fetch("http://localhost:8080/projects/", {
-      method: "POST",
-      body: formData,
-    });
+      // Links
+      const links = [
+        { name: "GitHub Repository", url: projectData.githubLink },
+        { name: "Live Demo", url: projectData.demoLink },
+        { name: "Research Paper", url: projectData.researchPaper },
+      ];
+      formData.append("links", JSON.stringify(links));
 
-    if (!response.ok) throw new Error("Failed to upload project");
+      // Files
+      uploadedFiles.forEach((file) => formData.append("files", file));
+      screenshots.forEach((file) => formData.append("screenshots", file));
 
-    const result = await response.json();
-    alert("Project uploaded successfully! ID: " + result.id);
+      // Call backend API
+      const response = await fetch("http://localhost:8090/projects/", {
+        method: "POST",
+        body: formData,
+      });
 
-    // Navigate to project list page
-    window.location.href = "/projects";
+      if (!response.ok) throw new Error("Failed to upload project");
 
-    // Reset form
-    setProjectData({
-      title: "",
-      description: "",
-      subject: "",
-      visibility: "Public",
-      tags: [],
-      teamMembers: [],
-      githubLink: "",
-      demoLink: "",
-      researchPaper: ""
-    });
-    setUploadedFiles([]);
-    setScreenshots([]);
-  } catch (error) {
-    console.error(error);
-    alert("Error uploading project");
-  }
-};
+      const result = await response.json();
+      alert("Project uploaded successfully! ID: " + result.id);
+
+      // Navigate to project list page
+      window.location.href = "/projects";
+
+      // Reset form
+      setProjectData({
+        title: "",
+        description: "",
+        subject: "",
+        visibility: "Public",
+        tags: [],
+        teamMembers: [],
+        githubLink: "",
+        demoLink: "",
+        researchPaper: ""
+      });
+      setUploadedFiles([]);
+      setScreenshots([]);
+    } catch (error) {
+      console.error(error);
+      alert("Error uploading project");
+    }
+  };
 
 
 
@@ -418,42 +497,65 @@ const ProjectUpload: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                 <div>
-  <label className="block text-sm font-medium mb-2">Add Team Member</label>
-  <Select
-    value={newTeamMember}
-    onValueChange={(value) => setNewTeamMember(value)}
-  >
-    <SelectTrigger>
-      <SelectValue placeholder="Select a team member" />
-    </SelectTrigger>
-    <SelectContent>
-      {mockUsers.map((user) => (
-        <SelectItem key={user.id} value={user.name}>
-          {user.name} ({user.email})
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-  <Button
-    type="button"
-    onClick={addTeamMember}
-    className="mt-2"
-  >
-    <Plus className="w-4 h-4 mr-1" />
-    Add
-  </Button>
-</div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Add Team Member</label>
 
+                    {/* Search input */}
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Enter username or email"
+                      className="w-full p-2 border rounded"
+                    />
 
+                    {/* Search results dropdown */}
+                    {search && (
+                      <div className="mt-2 border rounded bg-white shadow max-h-40 overflow-y-auto">
+                        {filteredUsers.length > 0 ? (
+                          filteredUsers.map((user) => (
+                            <div
+                              key={user.user_id}
+                              onClick={() => {
+                                setNewTeamMember(user);
+                                setSearch(`${user.username} (${user.email})`);
+                              }}
+                              className="p-2 hover:bg-muted cursor-pointer"
+                            >
+                              {user.username} ({user.email})
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-2 text-sm text-muted-foreground">No users found</div>
+                        )}
+                      </div>
+                    )}
+
+                    <Button
+                      type="button"
+                      onClick={addTeamMember}
+                      disabled={!newTeamMember}
+                      className="mt-2"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+
+                  {/* Selected team members */}
                   {projectData.teamMembers.length > 0 && (
                     <div className="space-y-2">
-                      {projectData.teamMembers.map((member) => (
-                        <div key={member} className="flex items-center justify-between p-2 bg-muted rounded">
-                          <span>{member}</span>
+                      {projectData.teamMembers.map((member: User) => (
+                        <div
+                          key={member.user_id}
+                          className="flex items-center justify-between p-2 bg-muted rounded"
+                        >
+                          <span>
+                            {member.username} ({member.email})
+                          </span>
                           <button
                             type="button"
-                            onClick={() => removeTeamMember(member)}
+                            onClick={() => removeTeamMember(member.user_id)}
                             className="text-muted-foreground hover:text-destructive"
                           >
                             <X className="w-4 h-4" />

@@ -34,6 +34,7 @@ const ProjectEdit: React.FC = () => {
   const { toast } = useToast();
 
   const mockUser = {
+    _id: "user123",
     name: "John Doe",
     email: "john.doe@university.edu",
     role: "student" as const,
