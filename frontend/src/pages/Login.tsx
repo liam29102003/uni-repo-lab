@@ -110,10 +110,11 @@ const handleLogin = async (e: React.FormEvent) => {
       { headers: { Authorization: `Bearer ${access_token}` } }
     );
 
-    const user = userResponse.data;
-    localStorage.setItem("user", JSON.stringify(user)); // Save user info
-    localStorage.setItem("user_id", user.user_id);
-    localStorage.setItem("mongo_id", user.id);
+  const user = userResponse.data;
+  localStorage.setItem("user", JSON.stringify(user)); // Save user info
+  localStorage.setItem("user_id", user.user_id);
+  localStorage.setItem("mongo_id", user.id);
+  localStorage.setItem("role", user.role); // Store role for ProtectedRoute
     console.log("Fetched user data:", user);
     console.log("User ID:", user.user_id, "Mongo ID:", user.id);
 
@@ -122,14 +123,19 @@ const handleLogin = async (e: React.FormEvent) => {
       description: `Welcome back, ${user.username}!`,
     });
 
-    // 3️⃣ Redirect based on role
-    if (user.role === "student") {
-      navigate("/profile");
-    } else if (user.role === "uni") {
-      navigate("/university");
-    } else {
-      navigate("/"); // fallback
-    }
+    // Use setTimeout to ensure toast and state updates complete before redirect
+    setTimeout(() => {
+      console.log("User role:", user.role);
+      if (user.role === "student") {
+        navigate("/profile");
+      } else if (user.role === "uni") {
+        navigate("/university");
+      } else if (user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/"); // fallback
+      }
+    }, 100);
   } catch (err: any) {
     console.error("Login failed:", err.response?.data || err.message);
     setErrorMsg(err.response?.data?.detail || "Login failed");

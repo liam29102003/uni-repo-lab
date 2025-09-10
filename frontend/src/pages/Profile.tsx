@@ -51,6 +51,11 @@ interface Project {
 const Profile: React.FC = () => {
   const [user, setUser] = useState<UserData | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [answers, setAnswers] = useState<any[]>([]);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -85,7 +90,9 @@ const Profile: React.FC = () => {
       });
       const userData = res.data;
       localStorage.setItem("user_id", userData.user_id); // store UUID
-      console.log("User ID:", userData.user_id);
+      localStorage.setItem("mongo_id", userData._id);   // store MongoDB ObjectId for Q&A
+      console.log("User UUID:", userData.user_id);
+      console.log("User MongoID:", userData._id);
 
          // Fix image URL
       const imageUrl = userData.profile_image?.startsWith("http")
@@ -129,12 +136,64 @@ const Profile: React.FC = () => {
     }
   };
 
+const fetchUserQA = async (mongoId: string) => {
+  if (!token || !mongoId) return;
+  const hi = "68c1292508fdcd8f3da33f73";
+
+  try {
+    // const res = await axios.get(`http://localhost:8070/api/questions/user/${mongoId}`, {
+    const res= await axios.get(`http://127.0.0.1:8070/api/questions/user/${hi}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = res.data;
+    setQuestions(data);
+
+    const allAnswers = data.flatMap((q: any) =>
+      q.answers.map((a: any) => ({
+        ...a,
+        questionTitle: q.title,
+        questionId: q._id
+      }))
+    );
+    setAnswers(allAnswers);
+
+  } catch (err) {
+    console.error("Failed to fetch Q&A:", err);
+  }
+};
+
+const handlePasswordUpdate = async () => {
+  if (!oldPassword || !newPassword) return alert("Fill both fields");
+
+  try {
+    await api.post("/users/update-password", { 
+      old_password: oldPassword, 
+      new_password: newPassword 
+    });
+    alert("Password updated successfully");
+    setOldPassword("");
+    setNewPassword("");
+  } catch (err: any) {
+    alert(err.response?.data?.detail || "Failed to update password");
+  }
+};
+
+
+
   // Load user then projects
   useEffect(() => {
     const loadData = async () => {
       await fetchUserData();
       const userId = localStorage.getItem("user_id");
-      if (userId) await fetchProjects(userId);
+      const mongoId = "68c1291008fdcd8f3da33f72"
+
+      if (userId) {
+      await fetchProjects(userId);
+    }
+    if (mongoId) {
+      await fetchUserQA(mongoId);
+    }
     };
     loadData();
   }, []);
@@ -222,9 +281,19 @@ const Profile: React.FC = () => {
     { id: 1, title: "OAuth2 implementation", year: "2023", tags: ["Auth"], upvotes: 15 }
   ];
 
+  // Map user to Header props shape
+  const headerUser = user
+    ? {
+        name: user.username,
+        email: user.email,
+        role: (user as any).role || 'student',
+        avatar: user.profile_image || undefined,
+      }
+    : undefined;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/10">
-      <Header />
+      <Header user={headerUser} />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <Card className="p-6 mb-8 bg-blue-100 shadow-lg">
@@ -245,6 +314,7 @@ const Profile: React.FC = () => {
                       onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
                     />
                   </label>
+                  
                 )}
               </div>
 
@@ -304,6 +374,27 @@ const Profile: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                {isEditing && (
+  <div className="mt-6 p-4 border rounded-md bg-gray-50">
+    <h3 className="font-semibold mb-2">Change Password</h3>
+    <Input
+      type="password"
+      placeholder="Old password"
+      value={oldPassword}
+      onChange={(e) => setOldPassword(e.target.value)}
+      className="mb-2"
+    />
+    <Input
+      type="password"
+      placeholder="New password"
+      value={newPassword}
+      onChange={(e) => setNewPassword(e.target.value)}
+      className="mb-2"
+    />
+    <Button onClick={handlePasswordUpdate}>Update Password</Button>
+  </div>
+)}
+
 
 
                 <div>
@@ -383,21 +474,22 @@ const Profile: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
-                    Questions ({mockQuestions.length})
+                    Questions ({questions.length})
                   </h3>
                   <div className="space-y-3">
-                    {mockQuestions.map((question) => (
-                      <Card key={question.id} className="p-4">
+                    {questions.map((q) => (
+                      <Card key={q._id} className="p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-medium">{question.title}</h4>
+                            <h4 className="font-medium">{q.title}</h4>
+                            <p className="text-sm text-gray-600 mt-1">{q.content.slice(0, 120)}...</p>
                             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
-                                {question.year}
+                                {new Date(q.createdAt).toLocaleDateString()}
                               </span>
                               <div className="flex gap-1">
-                                {question.tags.map((tag) => (
+                                {q.tags.map((tag: string) => (
                                   <Badge key={tag} variant="outline" className="text-xs">
                                     {tag}
                                   </Badge>
@@ -407,7 +499,7 @@ const Profile: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-1 text-sm">
                             <ArrowUp className="w-4 h-4" />
-                            {question.upvotes}
+                            {q.upvotes}
                           </div>
                         </div>
                       </Card>
@@ -419,31 +511,25 @@ const Profile: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
-                    Answers ({mockAnswers.length})
+                    Answers ({answers.length})
                   </h3>
                   <div className="space-y-3">
-                    {mockAnswers.map((answer) => (
-                      <Card key={answer.id} className="p-4">
+                    {answers.map((a) => (
+                      <Card key={a._id} className="p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-medium">{answer.title}</h4>
+                            <h4 className="font-medium">Answer to: {a.questionTitle}</h4>
+                            <p className="text-sm mt-1">{a.body}</p>
                             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
-                                {answer.year}
+                                {new Date(a.createdAt).toLocaleDateString()}
                               </span>
-                              <div className="flex gap-1">
-                                {answer.tags.map((tag) => (
-                                  <Badge key={tag} variant="outline" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-1 text-sm text-primary">
                             <ArrowUp className="w-4 h-4" />
-                            {answer.upvotes}
+                            {a.upvotes}
                           </div>
                         </div>
                       </Card>
@@ -452,6 +538,7 @@ const Profile: React.FC = () => {
                 </div>
               </div>
             </TabsContent>
+
           </Tabs>
         </div>
       </main>

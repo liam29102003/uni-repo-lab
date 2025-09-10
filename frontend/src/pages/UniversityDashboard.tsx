@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ import {
   GraduationCap
 } from "lucide-react";
 
-const UniversityDashboard = () => {
+const UniversityDashboardContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [students, setStudents] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -653,5 +654,11 @@ const openEditModal = (student: any) => {
     </div>
   );
 };
+
+const UniversityDashboard = () => (
+  <ProtectedRoute allowedRoles={["uni"]}>
+    <UniversityDashboardContent />
+  </ProtectedRoute>
+);
 
 export default UniversityDashboard;

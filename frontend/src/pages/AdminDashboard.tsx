@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import axios from "axios";
+import api from "@/utils/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +26,11 @@ import {
   Building
 } from "lucide-react";
 
-const AdminDashboard = () => {
+const AdminDashboardContent = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [students, setStudents] = useState<any[]>([]);
+  const token = localStorage.getItem("access_token");
+
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -59,6 +65,24 @@ const AdminDashboard = () => {
     { id: 1, university: "Yale University", type: "New Registration", date: "2024-01-15", contact: "admin@yale.edu" },
     { id: 2, university: "Princeton", type: "Access Request", date: "2024-01-14", contact: "it@princeton.edu" },
   ];
+
+useEffect(() => {
+  const fetchStudents = async () => {
+    if (activeTab === "students") {
+      try {
+        // No Authorization header needed
+        const res = await api.get("/users/allStudents");
+        setStudents(res.data);
+        console.log("Fetched students:", res.data);
+      } catch (err) {
+        console.error("Failed to fetch students:", err);
+      }
+    }
+  };
+
+  fetchStudents();
+}, [activeTab]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/10">
@@ -220,7 +244,7 @@ const AdminDashboard = () => {
                   <Input placeholder="Search students..." className="pl-10 w-64" />
                 </div>
               </div>
-              
+
               <Card className="p-6">
                 <Table>
                   <TableHeader>
@@ -233,26 +257,35 @@ const AdminDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockStudents.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell>{student.university}</TableCell>
-                        <TableCell>{student.email}</TableCell>
-                        <TableCell>{student.projects}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">View</Button>
-                            <Button variant="outline" size="sm">Suspend</Button>
-                            <Button variant="outline" size="sm">Delete</Button>
-                          </div>
+                    {students.length > 0 ? (
+                      students.map((student) => (
+                        <TableRow key={student.user_id}>
+                          <TableCell className="font-medium">{student.username}</TableCell>
+                          <TableCell>{student.university}</TableCell>
+                          <TableCell>{student.email}</TableCell>
+                          <TableCell>{student.projects?.length || 0}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">View</Button>
+                              <Button variant="outline" size="sm">Suspend</Button>
+                              <Button variant="outline" size="sm">Delete</Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          No students found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </Card>
             </div>
           )}
+
 
           {activeTab === "requests" && (
             <div className="space-y-6">
@@ -292,5 +325,11 @@ const AdminDashboard = () => {
     </div>
   );
 };
+
+const AdminDashboard = () => (
+  <ProtectedRoute allowedRoles={["admin"]}>
+    <AdminDashboardContent />
+  </ProtectedRoute>
+);
 
 export default AdminDashboard;
