@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from "react-router-dom";
+import { supabase } from '../supabase/supabaseClient';
 
 import {
   Select,
@@ -391,6 +392,40 @@ const ProjectUpload: React.FC = () => {
     setProjectData((prev) => ({ ...prev, subject: e.target.value }));
   };
 
+  // image upload
+  const [uploading, setUploading] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+ 
+    const handleFileUpload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+  
+      try {
+        setUploading(true);
+  
+        const fileName = `${Date.now()}-${file.name}`;
+  
+        // Upload directly
+        const { error } = await supabase.storage
+          .from("dam_food")
+          .upload(fileName, file);
+  
+        if (error) throw error;
+  
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from("dam_food")
+          .getPublicUrl(fileName);
+  
+        console.log(publicUrlData.publicUrl);
+        setImages([...images, publicUrlData.publicUrl]);
+      } catch (err) {
+        console.error("Upload failed:", err.message);
+      } finally {
+        setUploading(false);
+      }
+    };
+
 
 
   return (
@@ -762,7 +797,8 @@ const ProjectUpload: React.FC = () => {
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={(e) => handleFileInput(e, 'screenshots')}
+                      // onChange={(e) => handleFileInput(e, 'screenshots')}
+                      onChange={handleFileUpload}
                       className="hidden"
                       id="screenshot-upload"
                     />
@@ -775,6 +811,11 @@ const ProjectUpload: React.FC = () => {
                       Choose Images
                     </Button>
                   </div>
+                  {
+                    images?.map((img)=>(
+                      img && <img src={img} key={img} className='h-36 w-36' alt="uploaded image" />
+                    ))
+                  }
 
                   {screenshots.length > 0 && (
                     <div className="mt-4 space-y-2">
