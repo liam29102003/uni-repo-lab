@@ -14,7 +14,8 @@ import Forum from "./pages/Forum";
 import ForumDetail from "./pages/ForumDetail";
 import AskQuestion from "./pages/AskQuestion";
 import JoinUniversity from "./pages/JoinUniversity";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Adminlayout from "./pages/admin/Adminlayout";
 import UniversityDashboard from "./pages/UniversityDashboard";
 import Profile from "./pages/Profile";
 import StudentManagement from "./pages/StudentManagement";
@@ -39,7 +40,7 @@ const App = () => (
           <Route path="/forum/:id" element={<ForumDetail />} />
           <Route path="/forum/ask" element={<AskQuestion />} />
           <Route path="/join" element={<JoinUniversity />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin" element={<Adminlayout />} />
           <Route path="/university" element={<UniversityDashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/student-management" element={<StudentManagement />} />
