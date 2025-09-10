@@ -1,103 +1,175 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import api from "@/utils/api"; // axios instance with baseURL
+
 import { 
-  User, 
-  Mail, 
-  GraduationCap, 
-  Github, 
-  Edit, 
-  Save, 
-  Camera,
-  FolderOpen,
-  MessageSquare,
-  ArrowUp,
-  Calendar,
-  Tag
+  Mail, GraduationCap, Edit, Save, Camera, FolderOpen, MessageSquare, ArrowUp, Calendar 
 } from "lucide-react";
 
-const Profile = () => {
-  const [isEditing, setIsEditing] = useState(false);
+// User Data type
+interface UserData {
+  username: string;
+  email: string;
+  university: string;
+  student_id: string;
+  year: number;
+  semester: number;
+  major: string;
+  date_of_birth: string;
+  github_link: string;
+  description: string;
+  profile_image: string;
+}
 
-  const mockProfile = {
-    name: "Sarah Chen",
-    email: "sarah.chen@mit.edu",
-    studentId: "SC2024001",
-    university: "MIT",
-    major: "Computer Science",
-    year: "Senior",
-    rank: "Advanced",
-    github: "https://github.com/sarahchen",
-    description: "Passionate about AI/ML and full-stack development. Currently working on innovative projects in machine learning and web technologies.",
-    avatar: "/placeholder.svg"
+const Profile: React.FC = () => {
+  const [user, setUser] = useState<UserData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    username: "",
+    student_id: "",
+    year: 0,
+    semester: 0,
+    major: "",
+    date_of_birth: "",
+    github_link: "",
+    description: "",
+    profile_image: null as File | null,
+    profile_preview: ""
+  });
+
+  const navigate = useNavigate();
+  const token = localStorage.getItem("access_token");
+
+  // Fetch user data
+  const fetchUserData = async () => {
+    const token = localStorage.getItem("access_token"); // ✅ make sure token is retrieved
+    console.log("Token being sent:", token);
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+    try {
+      const res = await axios.get<UserData>("http://localhost:8080/api/v1/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const userData = res.data;
+         // Fix image URL
+      const imageUrl = userData.profile_image?.startsWith("http")
+      ? userData.profile_image
+      : `http://localhost:8080${userData.profile_image}`;
+      setUser(userData);
+      setFormData({
+        username: userData.username || "",
+        student_id: userData.student_id || "",
+        year: userData.year || 0,
+        semester: userData.semester || 0,
+        major: userData.major || "",
+        date_of_birth: userData.date_of_birth || "",
+        github_link: userData.github_link || "",
+        description: userData.description || "",
+        profile_image: null,
+        profile_preview: imageUrl || "",
+      });
+    } catch (err) {
+      console.error(err);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+      navigate("/login");
+      }
   };
 
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  if (!user) return <div>Loading...</div>;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+       [name]: name === "year" || name === "semester" ? parseInt(value) : value,
+    }));
+  };
+
+  const handleFileChange = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormData((prev) => ({
+        ...prev,
+        profile_image: file,
+        profile_preview: reader.result as string,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+ const handleSubmit = async () => {
+  const data = new FormData();
+  data.append("username", formData.username);
+  data.append("year", formData.year.toString());
+  data.append("semester", formData.semester.toString());
+  data.append("major", formData.major);
+  data.append("date_of_birth", formData.date_of_birth);
+  data.append("github_link", formData.github_link);
+  data.append("description", formData.description);
+  if (formData.profile_image) data.append("profile_image", formData.profile_image);
+
+  try {
+    const res = await axios.post("http://localhost:8080/api/v1/users/update", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const updatedUser = res.data;
+
+    // Prepend backend URL for relative path
+    const imageUrl = updatedUser.profile_image
+  ? updatedUser.profile_image.startsWith("http")
+    ? updatedUser.profile_image
+    : `http://127.0.0.1:8000${updatedUser.profile_image}`
+  : formData.profile_preview; // fallback to previous image if null
+
+    setUser(updatedUser);
+    setFormData((prev) => ({
+      ...prev,
+      profile_preview: imageUrl,
+      profile_image: null, // reset file input
+    }));
+
+
+
+    alert("Profile updated!");
+    setIsEditing(false);
+  } catch (err) {
+    console.error("Update failed:", err);
+    alert("Failed to update profile.");
+  }
+};
+
+  // Mock projects & Q&A
   const mockProjects = [
-    {
-      id: 1,
-      name: "AI-Powered Study Assistant",
-      description: "Machine learning model that helps students with personalized study recommendations",
-      year: "2024",
-      subject: "Machine Learning",
-      tags: ["Python", "TensorFlow", "React"]
-    },
-    {
-      id: 2,
-      name: "Blockchain Voting System",
-      description: "Secure voting platform using blockchain technology for student elections",
-      year: "2023",
-      subject: "Cryptography",
-      tags: ["Solidity", "Web3", "JavaScript"]
-    },
-    {
-      id: 3,
-      name: "Campus Navigation App",
-      description: "Mobile app for indoor navigation within university campus",
-      year: "2023",
-      subject: "Mobile Development",
-      tags: ["React Native", "GPS", "AR"]
-    }
+    { id: 1, name: "AI-Powered Study Assistant", description: "ML model for personalized study", year: "2024", subject: "ML", tags: ["Python", "TensorFlow", "React"] },
+    { id: 2, name: "Blockchain Voting System", description: "Secure voting platform", year: "2023", subject: "Cryptography", tags: ["Solidity", "Web3"] }
   ];
-
   const mockQuestions = [
-    {
-      id: 1,
-      title: "Best practices for React state management?",
-      year: "2024",
-      tags: ["React", "JavaScript"],
-      upvotes: 24
-    },
-    {
-      id: 2,
-      title: "How to optimize machine learning model performance?",
-      year: "2024",
-      tags: ["ML", "Python"],
-      upvotes: 18
-    }
+    { id: 1, title: "React state best practices?", year: "2024", tags: ["React"], upvotes: 24 }
   ];
-
   const mockAnswers = [
-    {
-      id: 1,
-      title: "Database design patterns for scalable applications",
-      year: "2024",
-      tags: ["Database", "Architecture"],
-      upvotes: 32
-    },
-    {
-      id: 2,
-      title: "Implementing OAuth2 authentication",
-      year: "2023",
-      tags: ["Authentication", "Security"],
-      upvotes: 15
-    }
+    { id: 1, title: "OAuth2 implementation", year: "2023", tags: ["Auth"], upvotes: 15 }
   ];
 
   return (
@@ -105,122 +177,102 @@ const Profile = () => {
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Profile Header */}
           <Card className="p-6 mb-8">
             <div className="flex flex-col md:flex-row gap-6">
+              {/* Avatar */}
               <div className="relative">
                 <Avatar className="w-32 h-32">
-                  <AvatarImage src={mockProfile.avatar} alt={mockProfile.name} />
-                  <AvatarFallback className="text-2xl">
-                    {mockProfile.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
+                  <AvatarImage src={formData.profile_preview} alt={user.username} />
+                  <AvatarFallback>{user.username.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                 </Avatar>
                 {isEditing && (
-                  <Button size="icon" className="absolute -bottom-2 -right-2">
-                    <Camera className="w-4 h-4" />
-                  </Button>
+                  <label className="absolute -bottom-2 -right-2 cursor-pointer bg-blue-100 p-2 rounded-full">
+                    <Camera className="w-4 h-4 text-blue-700" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
+                    />
+                  </label>
                 )}
               </div>
-              
+
+              {/* Info */}
               <div className="flex-1 space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
                     {isEditing ? (
-                      <Input defaultValue={mockProfile.name} className="text-2xl font-bold mb-2" />
+                      <Input value={formData.username} onChange={handleChange} name="username" className="text-2xl font-bold mb-2" />
                     ) : (
-                      <h1 className="text-2xl font-bold">{mockProfile.name}</h1>
+                      <h1 className="text-2xl font-bold">{user.username}</h1>
                     )}
                     <div className="flex items-center gap-4 text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Mail className="w-4 h-4" />
-                        {mockProfile.email}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <GraduationCap className="w-4 h-4" />
-                        {mockProfile.university}
-                      </span>
+                      <span className="flex items-center gap-1"><Mail className="w-4 h-4" /> {user.email}</span>
+                      <span className="flex items-center gap-1"><GraduationCap className="w-4 h-4" /> {user.university}</span>
                     </div>
                   </div>
-                  
                   <Button
                     variant={isEditing ? "default" : "outline"}
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={async () => isEditing ? await handleSubmit() : setIsEditing(true)}
                   >
-                    {isEditing ? (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Save
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Profile
-                      </>
-                    )}
+                    {isEditing ? <><Save className="w-4 h-4 mr-2" /> Save</> : <><Edit className="w-4 h-4 mr-2" /> Edit Profile</>}
                   </Button>
                 </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Student ID</label>
-                    {isEditing ? (
-                      <Input defaultValue={mockProfile.studentId} />
-                    ) : (
-                      <p className="font-medium">{mockProfile.studentId}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Major</label>
-                    {isEditing ? (
-                      <Input defaultValue={mockProfile.major} />
-                    ) : (
-                      <p className="font-medium">{mockProfile.major}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Year</label>
-                    {isEditing ? (
-                      <Input defaultValue={mockProfile.year} />
-                    ) : (
-                      <p className="font-medium">{mockProfile.year}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Rank</label>
-                    <Badge variant="secondary">{mockProfile.rank}</Badge>
-                  </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Student ID</label>
+                  <p className="font-medium">{user.student_id}</p>
+
                 </div>
-                
+
+                {/* Details */}
+                {/* Details */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[ "major", "year","semester", "date_of_birth"].map((field) => (
+                    <div key={field}>
+                      <label className="text-sm font-medium text-muted-foreground">{field.replace("_", " ")}</label>
+
+                      {isEditing ? (
+                        field === "date_of_birth" ? (
+                          // Date picker for DOB
+                          <Input
+                            type="date"
+                            value={(formData as any)[field]}
+                            name={field}
+                            onChange={handleChange}
+                          />
+                        ) : (
+                          <Input
+                            value={(formData as any)[field]}
+                            name={field}
+                            onChange={handleChange}
+                          />
+                        )
+                      ) : (
+                        <p className="font-medium">{(user as any)[field] || "Not set"}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">GitHub</label>
-                  {isEditing ? (
-                    <div className="flex gap-2">
-                      <Github className="w-4 h-4 mt-2" />
-                      <Input defaultValue={mockProfile.github} />
-                    </div>
-                  ) : (
-                    <p className="flex items-center gap-2">
-                      <Github className="w-4 h-4" />
-                      <a href={mockProfile.github} className="text-primary hover:underline">
-                        {mockProfile.github}
-                      </a>
-                    </p>
-                  )}
+                  {isEditing ? <Input value={formData.github_link} name="github_link" onChange={handleChange} /> : 
+                    <p className="text-sm text-blue-600 underline">
+                      <a href={user.github_link} target="_blank">{user.github_link}</a>
+                    </p>}
                 </div>
-                
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Description</label>
-                  {isEditing ? (
-                    <Textarea defaultValue={mockProfile.description} rows={3} />
-                  ) : (
-                    <p className="text-sm">{mockProfile.description}</p>
-                  )}
+                  {isEditing ? <Textarea value={formData.description} name="description" onChange={handleChange} rows={3} /> : <p className="text-sm">{user.description}</p>}
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Profile Tabs */}
+          {/* Tabs */}
+           {/* Profile Tabs */}
           <Tabs defaultValue="projects" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="projects" className="flex items-center gap-2">

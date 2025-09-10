@@ -7,13 +7,17 @@ import HomePage from "./pages/HomePage";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProjectUpload from "./pages/ProjectUpload";
+import ProjectEdit from "./pages/ProjectEdit";
+import Universities from "./pages/Universities";
 import Login from "./pages/Login";
 import Forum from "./pages/Forum";
 import ForumDetail from "./pages/ForumDetail";
 import AskQuestion from "./pages/AskQuestion";
 import JoinUniversity from "./pages/JoinUniversity";
-import AdminDashboard from "./pages/AdminDashboard";
-import UniversityDashboard from "./pages/UniversityDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Adminlayout from "./pages/admin/Adminlayout";
+import UniversityDashboard from "./pages/university/UniversityDashboard";
+import UniversityLayout from "./pages/university/UniversityLayout";
 import Profile from "./pages/Profile";
 import StudentManagement from "./pages/StudentManagement";
 import NotFound from "./pages/NotFound";
@@ -30,13 +34,15 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/projects/:id/edit" element={<ProjectEdit />} />
           <Route path="/upload" element={<ProjectUpload />} />
+          <Route path="/universities" element={<Universities />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/forum/:id" element={<ForumDetail />} />
           <Route path="/forum/ask" element={<AskQuestion />} />
           <Route path="/join" element={<JoinUniversity />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/university" element={<UniversityDashboard />} />
+          <Route path="/admin" element={<Adminlayout />} />
+          <Route path="/university" element={<UniversityLayout />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/student-management" element={<StudentManagement />} />
           <Route path="/login" element={<Login />} />
