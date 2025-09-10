@@ -38,6 +38,7 @@ const ProjectUpload: React.FC = () => {
     username: string;
     email: string;
     role: string;
+    university?: string;
   };
 
   const [projectData, setProjectData] = useState({
@@ -76,11 +77,11 @@ const ProjectUpload: React.FC = () => {
   ];
 
 
-  const subjects = [
-    'Computer Science', 'Engineering', 'Mathematics', 'Physics',
-    'Chemistry', 'Biology', 'Environmental Science', 'Business',
-    'Economics', 'Psychology', 'History', 'Literature', 'Art & Design'
-  ];
+  // const subjects = [
+  //   'Computer Science', 'Engineering', 'Mathematics', 'Physics',
+  //   'Chemistry', 'Biology', 'Environmental Science', 'Business',
+  //   'Economics', 'Psychology', 'History', 'Literature', 'Art & Design'
+  // ];
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -180,26 +181,27 @@ const ProjectUpload: React.FC = () => {
 
   // Add member
   const addTeamMember = () => {
-  if (
-    newTeamMember &&
-    !projectData.teamMembers.some((m: any) => m.user_id === newTeamMember.user_id)
-  ) {
-    setProjectData({
-      ...projectData,
-      teamMembers: [
-        ...projectData.teamMembers,
-        {
-          user_id: newTeamMember.user_id,
-          username: newTeamMember.username,
-          email: newTeamMember.email,
-          role: "member", // always member for now
-        },
-      ],
-    });
-    setNewTeamMember(null);
-    setSearch("");
-  }
-};
+    if (
+      newTeamMember &&
+      !projectData.teamMembers.some((m: any) => m.user_id === newTeamMember.user_id)
+    ) {
+      setProjectData({
+        ...projectData,
+        teamMembers: [
+          ...projectData.teamMembers,
+          {
+            user_id: newTeamMember.user_id,
+            username: newTeamMember.username,
+            email: newTeamMember.email,
+            role: "Member"
+          }
+        ],
+
+      });
+      setNewTeamMember(null);
+      setSearch("");
+    }
+  };
 
 
   // Remove member
@@ -248,7 +250,7 @@ const ProjectUpload: React.FC = () => {
     }
   };
 
-  const getUploader = (): { _id: string; name: string; email: string; role: string } | null => {
+  const getUploader = (): { _id: string; name: string; email: string; role: string, university: string } | null => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return null;
 
@@ -258,7 +260,8 @@ const ProjectUpload: React.FC = () => {
         _id: user.user_id,
         name: user.username, // or user.name depending on your stored object
         email: user.email,
-        role: "Owner"         // fixed or dynamic if needed
+        role: "Owner",
+        university: user.university      // fixed or dynamic if needed
       };
     } catch (err) {
       console.error("Failed to parse user from localStorage:", err);
@@ -274,7 +277,9 @@ const ProjectUpload: React.FC = () => {
 
     try {
       const formData = new FormData();
-      
+      const uploader = getUploader();
+
+
 
       // Basic info
       formData.append("title", projectData.title);
@@ -282,17 +287,22 @@ const ProjectUpload: React.FC = () => {
       formData.append("subject", projectData.subject);
       formData.append("visibility", projectData.visibility);
       formData.append("tags", JSON.stringify(projectData.tags));
-      formData.append("university", "Example University"); // Replace with actual university from user context
+      formData.append("university", uploader.university); // Replace with actual university from user context
 
       // Team members — always include current user
-      const uploader = getUploader();
 
 
-      const teamArray = [uploader, ...projectData.teamMembers.map((name) => ({
-        name,
-        role: "Member",
-        avatar: "/placeholder.svg",
-      }))];
+      const teamArray = [
+        uploader,
+        ...projectData.teamMembers.map((member) => ({
+          _id: member.user_id,
+          name: member.username,
+          email: member.email,
+          role: "Member",
+          // avatar: "/placeholder.svg",
+        })),
+      ];
+
 
       formData.append("team", JSON.stringify(teamArray));
 
@@ -340,6 +350,45 @@ const ProjectUpload: React.FC = () => {
       console.error(error);
       alert("Error uploading project");
     }
+  };
+
+
+
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [manualSubject, setManualSubject] = useState("");
+  const [useManualInput, setUseManualInput] = useState(false);
+
+
+  // Fetch subjects from API
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const res = await fetch("http://localhost:8090/subjects");
+        const data = await res.json();
+        if (data?.subjects) {
+          setSubjects(data.subjects);
+        }
+      } catch (err) {
+        console.error("Failed to fetch subjects", err);
+      }
+    };
+
+    fetchSubjects();
+  }, []);
+
+  const handleSelectChange = (value: string) => {
+    if (value === "manual") {
+      setUseManualInput(true);
+      setProjectData((prev) => ({ ...prev, subject: "" }));
+    } else {
+      setUseManualInput(false);
+      setProjectData((prev) => ({ ...prev, subject: value }));
+    }
+  };
+
+  const handleManualInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setManualSubject(e.target.value);
+    setProjectData((prev) => ({ ...prev, subject: e.target.value }));
   };
 
 
@@ -401,27 +450,54 @@ const ProjectUpload: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Subject */}
                     <div>
                       <label className="block text-sm font-medium mb-2">Subject *</label>
-                      <Select value={projectData.subject} onValueChange={(value) =>
-                        setProjectData(prev => ({ ...prev, subject: value }))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select subject area" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subjects.map((subject) => (
-                            <SelectItem key={subject} value={subject}>
-                              {subject}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {!useManualInput ? (
+                        <Select
+                          value={projectData.subject}
+                          onValueChange={(value) => {
+                            if (value === "manual") {
+                              setUseManualInput(true);
+                              setProjectData((prev) => ({ ...prev, subject: "" }));
+                            } else {
+                              setProjectData((prev) => ({ ...prev, subject: value }));
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select subject area" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {subjects.map((subject) => (
+                              <SelectItem key={subject} value={subject}>
+                                {subject}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="manual">➕ Add new subject</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          type="text"
+                          placeholder="Enter new subject"
+                          value={projectData.subject}
+                          onChange={(e) =>
+                            setProjectData((prev) => ({ ...prev, subject: e.target.value }))
+                          }
+                        />
+                      )}
                     </div>
 
+                    {/* Visibility */}
                     <div>
                       <label className="block text-sm font-medium mb-2">Visibility *</label>
-                      <Select value={projectData.visibility} onValueChange={(value) =>
-                        setProjectData(prev => ({ ...prev, visibility: value }))}>
+                      <Select
+                        value={projectData.visibility}
+                        onValueChange={(value) =>
+                          setProjectData((prev) => ({ ...prev, visibility: value }))
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -448,6 +524,7 @@ const ProjectUpload: React.FC = () => {
                       </Select>
                     </div>
                   </div>
+
                 </CardContent>
               </Card>
 
