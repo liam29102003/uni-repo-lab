@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { 
+} from "@/components/ui/select";
+import {
   ArrowLeft,
   Building2,
   Mail,
@@ -21,109 +20,142 @@ import {
   Users,
   BookOpen,
   CheckCircle,
-  Upload,
-  FileText,
   Award,
-  MapPin
-} from 'lucide-react';
-import Header from '@/components/Layout/Header';
-import Footer from '@/components/Layout/Footer';
+} from "lucide-react";
+import Header from "@/components/Layout/Header";
+import Footer from "@/components/Layout/Footer";
 
 const JoinUniversity: React.FC = () => {
   const [formData, setFormData] = useState({
-    universityName: '',
-    officialEmail: '',
-    website: '',
-    country: '',
-    city: '',
-    contactPersonName: '',
-    contactPersonTitle: '',
-    contactPersonPhone: '',
-    description: '',
-    studentCount: '',
-    established: '',
-    type: '',
-    accreditation: ''
+    university_name: "",
+    official_email: "",
+    website: "",
+    country: "",
+    city: "",
+    contact_person_name: "",
+    contact_person_title: "",
+    contact_person_phone: "",
+    description: "",
+    student_count: "",
+    established: "",
+    type: "",
+    accreditation: "",
   });
 
-  const [uploadedDocuments, setUploadedDocuments] = useState<File[]>([]);
-
   const mockUser = {
-    name: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@university.edu',
-    role: 'admin' as const
+    name: "Dr. Sarah Johnson",
+    email: "sarah.johnson@university.edu",
+    role: "admin" as const,
   };
 
   const countries = [
-    'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 
-    'France', 'Netherlands', 'Sweden', 'Denmark', 'Switzerland',
-    'Japan', 'Singapore', 'South Korea', 'China', 'India', 'Brazil'
+    "United States",
+    "United Kingdom",
+    "Canada",
+    "Australia",
+    "Germany",
+    "France",
+    "Netherlands",
+    "Sweden",
+    "Denmark",
+    "Switzerland",
+    "Japan",
+    "Singapore",
+    "South Korea",
+    "China",
+    "India",
+    "Brazil",
   ];
 
   const universityTypes = [
-    'Public Research University',
-    'Private Research University',
-    'Public Liberal Arts College',
-    'Private Liberal Arts College',
-    'Community College',
-    'Technical Institute',
-    'Graduate School',
-    'Specialized Institution'
+    "Public Research University",
+    "Private Research University",
+    "Public Liberal Arts College",
+    "Private Liberal Arts College",
+    "Community College",
+    "Technical Institute",
+    "Graduate School",
+    "Specialized Institution",
   ];
 
   const benefits = [
     {
       icon: <Users className="w-6 h-6 text-blue-500" />,
-      title: 'Global Collaboration',
-      description: 'Connect with students and faculty from partner universities worldwide'
+      title: "Global Collaboration",
+      description:
+        "Connect with students and faculty from partner universities worldwide",
     },
     {
       icon: <BookOpen className="w-6 h-6 text-emerald-500" />,
-      title: 'Knowledge Sharing',
-      description: 'Access to thousands of academic projects and research papers'
+      title: "Knowledge Sharing",
+      description:
+        "Access to thousands of academic projects and research papers",
     },
     {
       icon: <Award className="w-6 h-6 text-purple-500" />,
-      title: 'Academic Recognition',
-      description: 'Showcase your institution\'s innovative projects and achievements'
+      title: "Academic Recognition",
+      description:
+        "Showcase your institution's innovative projects and achievements",
     },
     {
       icon: <Globe className="w-6 h-6 text-amber-500" />,
-      title: 'Research Network',
-      description: 'Join a growing network of educational institutions and researchers'
-    }
+      title: "Research Network",
+      description:
+        "Join a growing network of educational institutions and researchers",
+    },
   ];
 
   const requirements = [
-    'Official university email domain',
-    'Accreditation documentation',
-    'Letter of authorization from university administration',
-    'Valid contact information for verification',
-    'Institutional website with academic programs listed'
+    "Official university email domain",
+    "Accreditation documentation",
+    "Letter of authorization from university administration",
+    "Valid contact information for verification",
+    "Institutional website with academic programs listed",
   ];
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setUploadedDocuments(prev => [...prev, ...files]);
-    }
-  };
-
-  const removeDocument = (index: number) => {
-    setUploadedDocuments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('University Registration:', formData);
-    console.log('Documents:', uploadedDocuments);
+
+    const payload = {
+      ...formData,
+      student_count: formData.student_count
+        ? parseInt(formData.student_count)
+        : undefined,
+      established: formData.established
+        ? parseInt(formData.established)
+        : undefined,
+    };
+
+    try {
+      const formDataToSend = new FormData();
+      for (const key in formData) {
+        formDataToSend.append(key, formData[key as keyof typeof formData]);
+      }
+
+      const response = await fetch("http://127.0.0.1:8000/universities/", {
+        method: "POST",
+        body: formDataToSend, // FormData automatically sets multipart/form-data
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Validation errors:", data);
+        alert("Validation error! Check console.");
+        return;
+      }
+
+      console.log("Backend response:", data);
+      alert("Submission successful!");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Failed to submit form. Check console for details.");
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header user={mockUser} />
-      
+
       <main className="container mx-auto px-4 py-8">
         {/* Back Navigation */}
         <div className="mb-6">
@@ -141,22 +173,25 @@ const JoinUniversity: React.FC = () => {
             Join UniRepo Network
           </h1>
           <p className="text-xl text-academic max-w-3xl mx-auto">
-            Connect your university to the global academic community and unlock collaborative opportunities for your students and faculty
+            Connect your university to the global academic community and unlock
+            collaborative opportunities for your students and faculty
           </p>
         </div>
 
         {/* Benefits Section */}
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-center mb-8">Why Join UniRepo?</h2>
+          <h2 className="text-2xl font-semibold text-center mb-8">
+            Why Join UniRepo?
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {benefits.map((benefit, index) => (
               <Card key={index} className="text-center">
                 <CardContent className="pt-6">
-                  <div className="flex justify-center mb-4">
-                    {benefit.icon}
-                  </div>
+                  <div className="flex justify-center mb-4">{benefit.icon}</div>
                   <h3 className="font-semibold mb-2">{benefit.title}</h3>
-                  <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {benefit.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -176,44 +211,74 @@ const JoinUniversity: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* University Name */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Official University Name *</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Official University Name *
+                    </label>
                     <Input
                       placeholder="Enter the full official name of your university..."
-                      value={formData.universityName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, universityName: e.target.value }))}
+                      value={formData.university_name}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          university_name: e.target.value,
+                        }))
+                      }
                       required
                     />
                   </div>
 
+                  {/* Email & Website */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Official Email Domain *</label>
+                      <label className="block text-sm font-medium mb-2">
+                        Official Email Domain *
+                      </label>
                       <Input
                         placeholder="admin@university.edu"
                         type="email"
-                        value={formData.officialEmail}
-                        onChange={(e) => setFormData(prev => ({ ...prev, officialEmail: e.target.value }))}
+                        value={formData.official_email}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            official_email: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">University Website *</label>
+                      <label className="block text-sm font-medium mb-2">
+                        University Website *
+                      </label>
                       <Input
                         placeholder="https://www.university.edu"
                         value={formData.website}
-                        onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            website: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
                   </div>
 
+                  {/* Country, City, Established */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Country *</label>
-                      <Select value={formData.country} onValueChange={(value) => 
-                        setFormData(prev => ({ ...prev, country: value }))}>
+                      <label className="block text-sm font-medium mb-2">
+                        Country *
+                      </label>
+                      <Select
+                        value={formData.country}
+                        onValueChange={(value) =>
+                          setFormData((prev) => ({ ...prev, country: value }))
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select country" />
                         </SelectTrigger>
@@ -228,33 +293,54 @@ const JoinUniversity: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">City *</label>
+                      <label className="block text-sm font-medium mb-2">
+                        City *
+                      </label>
                       <Input
                         placeholder="City name"
                         value={formData.city}
-                        onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            city: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Established Year</label>
+                      <label className="block text-sm font-medium mb-2">
+                        Established Year
+                      </label>
                       <Input
                         placeholder="1990"
                         type="number"
                         min="1800"
                         max={new Date().getFullYear()}
                         value={formData.established}
-                        onChange={(e) => setFormData(prev => ({ ...prev, established: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            established: e.target.value,
+                          }))
+                        }
                       />
                     </div>
                   </div>
 
+                  {/* University Type & Student Count */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">University Type *</label>
-                      <Select value={formData.type} onValueChange={(value) => 
-                        setFormData(prev => ({ ...prev, type: value }))}>
+                      <label className="block text-sm font-medium mb-2">
+                        University Type *
+                      </label>
+                      <Select
+                        value={formData.type}
+                        onValueChange={(value) =>
+                          setFormData((prev) => ({ ...prev, type: value }))
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
@@ -269,33 +355,55 @@ const JoinUniversity: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Student Population</label>
+                      <label className="block text-sm font-medium mb-2">
+                        Student Population
+                      </label>
                       <Input
                         placeholder="e.g., 15000"
                         type="number"
-                        value={formData.studentCount}
-                        onChange={(e) => setFormData(prev => ({ ...prev, studentCount: e.target.value }))}
+                        value={formData.student_count}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            student_count: e.target.value,
+                          }))
+                        }
                       />
                     </div>
                   </div>
 
+                  {/* Description & Accreditation */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">University Description *</label>
+                    <label className="block text-sm font-medium mb-2">
+                      University Description *
+                    </label>
                     <Textarea
-                      placeholder="Provide a brief description of your university, its mission, notable programs, and research focus areas..."
+                      placeholder="Provide a brief description of your university..."
                       value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
                       className="min-h-[100px]"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Accreditation Details</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Accreditation Details
+                    </label>
                     <Input
                       placeholder="List your primary accreditation bodies and certifications"
                       value={formData.accreditation}
-                      onChange={(e) => setFormData(prev => ({ ...prev, accreditation: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          accreditation: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                 </CardContent>
@@ -312,91 +420,56 @@ const JoinUniversity: React.FC = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Contact Person Name *</label>
+                      <label className="block text-sm font-medium mb-2">
+                        Contact Person Name *
+                      </label>
                       <Input
                         placeholder="Full name of authorized representative"
-                        value={formData.contactPersonName}
-                        onChange={(e) => setFormData(prev => ({ ...prev, contactPersonName: e.target.value }))}
+                        value={formData.contact_person_name}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            contact_person_name: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Title/Position *</label>
+                      <label className="block text-sm font-medium mb-2">
+                        Title/Position *
+                      </label>
                       <Input
                         placeholder="e.g., Dean, Director of IT, Vice President"
-                        value={formData.contactPersonTitle}
-                        onChange={(e) => setFormData(prev => ({ ...prev, contactPersonTitle: e.target.value }))}
+                        value={formData.contact_person_title}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            contact_person_title: e.target.value,
+                          }))
+                        }
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Phone Number</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Phone Number
+                    </label>
                     <Input
                       placeholder="+1 (555) 123-4567"
                       type="tel"
-                      value={formData.contactPersonPhone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, contactPersonPhone: e.target.value }))}
+                      value={formData.contact_person_phone}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          contact_person_phone: e.target.value,
+                        }))
+                      }
                     />
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Documents */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-primary" />
-                    Required Documentation
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                    <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Upload required documents (PDF, DOC, DOCX)
-                    </p>
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="document-upload"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById('document-upload')?.click()}
-                    >
-                      Choose Files
-                    </Button>
-                  </div>
-
-                  {uploadedDocuments.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Uploaded Documents ({uploadedDocuments.length})</p>
-                      {uploadedDocuments.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
-                          <div className="flex items-center space-x-2">
-                            <FileText className="w-4 h-4" />
-                            <span>{file.name}</span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeDocument(index)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -409,45 +482,37 @@ const JoinUniversity: React.FC = () => {
                   <CardTitle>Application Process</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
-                      1
+                  {[1, 2, 3, 4].map((step) => (
+                    <div key={step} className="flex items-start space-x-3">
+                      <div
+                        className={`w-6 h-6 ${step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"} rounded-full flex items-center justify-center text-xs font-medium`}
+                      >
+                        {step}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">
+                          {
+                            [
+                              "Submit Application",
+                              "Verification Process",
+                              "Setup & Training",
+                              "Go Live",
+                            ][step - 1]
+                          }
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {
+                            [
+                              "Complete this form with all required information",
+                              "Our team will verify your university credentials",
+                              "Get onboarded and trained on the platform",
+                              "Start collaborating with the global network",
+                            ][step - 1]
+                          }
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">Submit Application</p>
-                      <p className="text-xs text-muted-foreground">Complete this form with all required information</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-xs font-medium">
-                      2
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Verification Process</p>
-                      <p className="text-xs text-muted-foreground">Our team will verify your university credentials</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-xs font-medium">
-                      3
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Setup & Training</p>
-                      <p className="text-xs text-muted-foreground">Get onboarded and trained on the platform</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-xs font-medium">
-                      4
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">Go Live</p>
-                      <p className="text-xs text-muted-foreground">Start collaborating with the global network</p>
-                    </div>
-                  </div>
+                  ))}
                 </CardContent>
               </Card>
 
@@ -458,10 +523,10 @@ const JoinUniversity: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {requirements.map((requirement, index) => (
-                      <div key={index} className="flex items-start space-x-2">
+                    {requirements.map((req, idx) => (
+                      <div key={idx} className="flex items-start space-x-2">
                         <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-muted-foreground">{requirement}</p>
+                        <p className="text-sm text-muted-foreground">{req}</p>
                       </div>
                     ))}
                   </div>
@@ -475,7 +540,8 @@ const JoinUniversity: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Have questions about joining UniRepo? Our support team is here to help.
+                    Have questions about joining UniRepo? Our support team is
+                    here to help.
                   </p>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center space-x-2">
@@ -498,7 +564,8 @@ const JoinUniversity: React.FC = () => {
               <div>
                 <h3 className="font-semibold">Ready to Join UniRepo?</h3>
                 <p className="text-sm text-muted-foreground">
-                  By submitting this application, you agree to our terms of service and partnership agreement.
+                  By submitting this application, you agree to our terms of
+                  service and partnership agreement.
                 </p>
               </div>
               <div className="flex space-x-4">
