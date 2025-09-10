@@ -1,64 +1,53 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import {
+  Building,
   Users,
   FolderOpen,
   ClipboardList,
   TrendingUp,
-  Building,
 } from "lucide-react";
-import { useState, useEffect } from "react";
 
-interface Stats {
-  totalUniversities: number;
-  totalStudents: number;
-  totalProjects: number;
-  pendingRequests: number;
-}
-
-interface API {
-  ADMIN_API: string; // <-- expect this as a prop
-}
-
-const AdminDashboard = ({ ADMIN_API }: API) => {
-  const [stats, setStats] = useState<Stats | null>(null);
+const AdminDashboard = () => {
+  const [stats, setStats] = useState({
+    universities: 0,
+    students: 0,
+    pending_requests: 0,
+  });
+  const [totalProjects, setTotalProjects] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchStats() {
+    const fetchStats = async () => {
       try {
-        let url = `${ADMIN_API}api/admin/stats`;
-        console.log("Fetching stats from:", url);
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error("Failed to fetch stats");
-        }
-        const data = await res.json();
-        setStats(data);
-      } catch (err) {
-        // console.error(err);
+        // Fetch other dashboard stats
+        const dashboardRes = await fetch(
+          "http://127.0.0.1:8000/dashboard/stats",
+        );
+        const dashboardData = await dashboardRes.json();
+        setStats({
+          universities: dashboardData.universities,
+          students: dashboardData.students,
+          pending_requests: dashboardData.pending_requests,
+        });
+
+        // Fetch total projects from /projects
+        const projectsRes = await fetch("http://127.0.0.1:8090/projects/");
+        const projectsData = await projectsRes.json();
+        const total = projectsData?.pagination?.total || 0;
+        setTotalProjects(total);
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchStats();
-  }, [ADMIN_API]);
+  }, []);
 
-  if (loading) {
-    return <p>Loading dashboard...</p>;
-  }
+  if (loading) return <p>Loading dashboard stats...</p>;
 
-  if (!stats) {
-    // return
-    <p>Failed to load stats.</p>;
-  }
-  console.log(stats);
-  const mockStats = {
-    totalUniversities: 156,
-    totalStudents: 12847,
-    totalProjects: 3421,
-    pendingRequests: 23,
-  };
   return (
     <div className="space-y-6">
       <div>
@@ -76,9 +65,7 @@ const AdminDashboard = ({ ADMIN_API }: API) => {
               <p className="text-sm font-medium text-muted-foreground">
                 Universities
               </p>
-              <p className="text-2xl font-bold">
-                {mockStats.totalUniversities}
-              </p>
+              <p className="text-2xl font-bold">{stats.universities}</p>
             </div>
             <Building className="w-8 h-8 text-primary" />
           </div>
@@ -90,7 +77,7 @@ const AdminDashboard = ({ ADMIN_API }: API) => {
               <p className="text-sm font-medium text-muted-foreground">
                 Students
               </p>
-              <p className="text-2xl font-bold">{mockStats.totalStudents}</p>
+              <p className="text-2xl font-bold">{stats.students}</p>
             </div>
             <Users className="w-8 h-8 text-primary" />
           </div>
@@ -102,7 +89,7 @@ const AdminDashboard = ({ ADMIN_API }: API) => {
               <p className="text-sm font-medium text-muted-foreground">
                 Projects
               </p>
-              <p className="text-2xl font-bold">{mockStats.totalProjects}</p>
+              <p className="text-2xl font-bold">{totalProjects}</p>
             </div>
             <FolderOpen className="w-8 h-8 text-primary" />
           </div>
@@ -114,7 +101,7 @@ const AdminDashboard = ({ ADMIN_API }: API) => {
               <p className="text-sm font-medium text-muted-foreground">
                 Pending Requests
               </p>
-              <p className="text-2xl font-bold">{mockStats.pendingRequests}</p>
+              <p className="text-2xl font-bold">{stats.pending_requests}</p>
             </div>
             <ClipboardList className="w-8 h-8 text-primary" />
           </div>
