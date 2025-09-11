@@ -8,8 +8,7 @@ export default function CommentComp({parentId,parentType}) {
   const [comments, setComments] = useState<any[]>([]);
   const [comment, setComment] = useState("");
 
-  const userId = "64f9a2b7c5e4f123456789ab";
-  // const parentId = "68bfac12249e8b4fc045b596";
+  const userId = localStorage.getItem("user_object_id");
 
  const handlePostComment = async () => {
     try {

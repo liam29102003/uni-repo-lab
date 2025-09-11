@@ -277,7 +277,7 @@ const Adminlayout = () => {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-bold mb-2">Universities</h1>
+                  <h1 className="text-2xl font-bold mb-2">Universities123</h1>
                   <p className="text-muted-foreground">
                     Manage registered universities
                   </p>
