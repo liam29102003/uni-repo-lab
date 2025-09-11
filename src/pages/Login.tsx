@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,120 +16,136 @@ const Login: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  mongo_id: string;
+  user_id: string;
+}
+//   const handleLogin = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     setIsLoading(true);
+//     setErrorMsg("");
 
-  //   const handleLogin = async (e: React.FormEvent) => {
-  //     e.preventDefault();
-  //     setIsLoading(true);
-  //     setErrorMsg("");
+//     // Must use URLSearchParams for OAuth2PasswordRequestForm
+//     const params = new URLSearchParams();
+//     params.append("username", email); // backend uses username field for email
+//     params.append("password", password);
 
-  //     // Must use URLSearchParams for OAuth2PasswordRequestForm
-  //     const params = new URLSearchParams();
-  //     params.append("username", email); // backend uses username field for email
-  //     params.append("password", password);
-
-  //     try {
-  //           const response = await axios.post(
-  //       "http://127.0.0.1:8000/api/v1/auth/login",
-  //       params.toString(), // <-- make sure to stringify
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/x-www-form-urlencoded",
-  //         },
-  //       }
-  //     );
-
-
-  // const { access_token } = response.data as { access_token: string };
-  //       // Save access token
-  //       localStorage.setItem("access_token", access_token);
-
-  //       // Fetch user profile
-  //       const userResponse = await axios.get(
-  //         "http://127.0.0.1:8000/api/v1/users/me",
-  //         {
-  //           headers: { Authorization: `Bearer ${access_token}` },
-  //         }
-  //       );
-  //       localStorage.setItem("user", JSON.stringify(userResponse.data));
-
-  //       // Show success toast
-  //       toast({
-  //         title: "Login Successful",
-  //         description: "Welcome back to UniRepo!",
-  //       });
-  //       const userData = userResponse.data as { role: string };
-
-  //       // Navigate based on role
-  //       if (userData.role === 'student') {
-  //         navigate('/profile');
-  //       } else if (userData.role === 'uni') {
-  //         navigate('/university');
-  //       }
-
-  //     } catch (error: any) {
-  //       console.error("Login failed:", error.response?.data || error.message);
-  //       setErrorMsg(error.response?.data?.detail || "Login failed");
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrorMsg("");
-
-    try {
-      // OAuth2PasswordRequestForm style
-      const params = new URLSearchParams();
-      params.append("username", email); // backend uses username for email
-      params.append("password", password);
-
-      // 1️⃣ Login
-      const response = await axios.post(
-        "http://localhost:8080/api/v1/auth/login",
-        params.toString(),
-        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
-      );
-      console.log(response.data.user)
-      const { access_token } = response.data as { access_token: string };
-      // Save access token
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("user_object_id", response?.data?.user?._id)
-      // console.log("Login response:", response.data.user);
+//     try {
+//           const response = await axios.post(
+//       "http://127.0.0.1:8080/api/v1/auth/login",
+//       params.toString(), // <-- make sure to stringify
+//       {
+//         headers: {
+//           "Content-Type": "application/x-www-form-urlencoded",
+//         },
+//       }
+//     );
 
 
-      // 2️⃣ Get current user info
-      const userResponse = await axios.get(
-        "http://localhost:8080/api/v1/users/me",
-        { headers: { Authorization: `Bearer ${access_token}` } }
-      );
+// const { access_token } = response.data as { access_token: string };
+//       // Save access token
+//       localStorage.setItem("access_token", access_token);
 
-      console.log("User info response:", userResponse.data);
+//       // Fetch user profile
+//       const userResponse = await axios.get(
+//         "http://127.0.0.1:8080/api/v1/users/me",
+//         {
+//           headers: { Authorization: `Bearer ${access_token}` },
+//         }
+//       );
+//       localStorage.setItem("user", JSON.stringify(userResponse.data));
 
-      const user = userResponse.data;
-      localStorage.setItem("user", JSON.stringify(user)); // Save user info
+//       // Show success toast
+//       toast({
+//         title: "Login Successful",
+//         description: "Welcome back to UniRepo!",
+//       });
+//       const userData = userResponse.data as { role: string };
 
-      toast({
-        title: "Login Successful",
-        description: `Welcome back, ${user.username}!`,
-      });
+//       // Navigate based on role
+//       if (userData.role === 'student') {
+//         navigate('/profile');
+//       } else if (userData.role === 'uni') {
+//         navigate('/university');
+//       }
 
-      // 3️⃣ Redirect based on role
+//     } catch (error: any) {
+//       console.error("Login failed:", error.response?.data || error.message);
+//       setErrorMsg(error.response?.data?.detail || "Login failed");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setErrorMsg("");
+
+  try {
+    // OAuth2PasswordRequestForm style
+    const params = new URLSearchParams();
+    params.append("username", email); // backend uses username for email
+    params.append("password", password);
+
+    // 1️⃣ Login
+    const response = await axios.post(
+      "http://127.0.0.1:8080/api/v1/auth/login",
+      params.toString(),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+    console.log(response?.data?.user?._id)
+localStorage.setItem("user_object_id", response?.data?.user?._id)
+    const { access_token, refresh_token, mongo_id,user_id  } = response.data as LoginResponse;
+
+    // Store tokens
+    localStorage.setItem("access_token", access_token);
+    localStorage.setItem("refresh_token", refresh_token);
+    console.log("Full login response:", response.data);
+
+
+
+    // 2️⃣ Get current user info
+    const userResponse = await axios.get(
+      "http://127.0.0.1:8080/api/v1/users/me",
+      { headers: { Authorization: `Bearer ${access_token}` } }
+    );
+
+  const user = userResponse.data;
+  localStorage.setItem("user", JSON.stringify(user)); // Save user info
+  localStorage.setItem("user_id", user.user_id);
+  localStorage.setItem("mongo_id", user.id);
+  localStorage.setItem("role", user.role); // Store role for ProtectedRoute
+    console.log("Fetched user data:", user);
+    console.log("User ID:", user.user_id, "Mongo ID:", user.id);
+
+    toast({
+      title: "Login Successful",
+      description: `Welcome back, ${user.username}!`,
+    });
+
+    // Use setTimeout to ensure toast and state updates complete before redirect
+    setTimeout(() => {
+      console.log("User role:", user.role);
       if (user.role === "student") {
         navigate("/profile");
       } else if (user.role === "uni") {
         navigate("/university");
+      } else if (user.role === "admin") {
+        navigate("/admin");
       } else {
         navigate("/"); // fallback
       }
-    } catch (err: any) {
-      console.error("Login failed:", err.response?.data || err.message);
-      setErrorMsg(err.response?.data?.detail || "Login failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    }, 100);
+  } catch (err: any) {
+    console.error("Login failed:", err.response?.data || err.message);
+    setErrorMsg(err.response?.data?.detail || "Login failed");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 
   return (
@@ -191,12 +208,6 @@ const Login: React.FC = () => {
                 </div>
               </div>
 
-              {/* Forgot Password */}
-              <div className="text-right">
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
 
               {/* Submit Button */}
               <Button type="submit" className="w-full" disabled={isLoading}>

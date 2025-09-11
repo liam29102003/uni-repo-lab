@@ -52,7 +52,7 @@ const ForumDetail: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/questions/${id}`);
+      const res = await fetch(`http://localhost:8070/api/questions/${id}`);
       const data = await res.json();
       setQuestion(data.question);
       setAnswers(data.answers);
@@ -76,7 +76,7 @@ const ForumDetail: React.FC = () => {
 
   const updateViewCount = async() =>{
     try {
-      await fetch(`http://localhost:8000/api/questions/${id}/view`, {
+      await fetch(`http://localhost:8070/api/questions/${id}/view`, {
         method: "PATCH"
       });
     } catch (err) {
@@ -96,7 +96,7 @@ const ForumDetail: React.FC = () => {
         answeredBy: user_id, // change later 
         body: newAnswer
       };
-      const res = await fetch(`http://localhost:8000/api/questions/save_answer`, {
+      const res = await fetch(`http://localhost:8070/api/questions/save_answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -114,7 +114,7 @@ const ForumDetail: React.FC = () => {
   // vote: 1 (upvote) or -1 (downvote)
   async function saveVote(questionId: any, userId: any, vote: any) {
     try {
-      const res = await fetch(`http://localhost:8000/api/questions/vote/${questionId}`, {
+      const res = await fetch(`http://localhost:8070/api/questions/vote/${questionId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, vote }),
@@ -133,7 +133,7 @@ const ForumDetail: React.FC = () => {
 
   async function saveAnswerVote(answerId: any, userId: any, vote: any) {
     try {
-      const res = await fetch(`http://localhost:8000/api/questions/answers/${answerId}/vote?user_id=${userId}&vote=${vote}`, {
+      const res = await fetch(`http://localhost:8070/api/questions/answers/${answerId}/vote?user_id=${userId}&vote=${vote}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, vote }),

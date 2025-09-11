@@ -7,6 +7,8 @@ import {
   ClipboardList,
   TrendingUp,
 } from "lucide-react";
+// import ProtectedRoute from "@/components/ProtectedRoute";
+
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -118,5 +120,10 @@ const AdminDashboard = () => {
     </div>
   );
 };
+// const AdminDashboard = () => (
+//   <ProtectedRoute allowedRoles={["admin"]}>
+//     <AdminDashboardContent />
+//   </ProtectedRoute>
+// );
 
 export default AdminDashboard;
