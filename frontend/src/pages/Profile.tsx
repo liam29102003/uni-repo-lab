@@ -138,15 +138,15 @@ const Profile: React.FC = () => {
 
 const fetchUserQA = async (mongoId: string) => {
   if (!token || !mongoId) return;
-  const hi = "68c1292508fdcd8f3da33f73";
+  const hi = localStorage.getItem("user_object_id");
+  console.log()
 
   try {
     // const res = await axios.get(`http://localhost:8070/api/questions/user/${mongoId}`, {
-    const res= await axios.get(`http://127.0.0.1:8070/api/questions/user/${hi}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res= await axios.get(`http://127.0.0.1:8070/api/questions/user/${hi}`);
 
     const data = res.data;
+    console.log(data)
     setQuestions(data);
 
     const allAnswers = data.flatMap((q: any) =>
@@ -481,7 +481,7 @@ const handlePasswordUpdate = async () => {
                       <Card key={q._id} className="p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-medium">{q.title}</h4>
+                            <a href={`/forum/${q._id}`} className="font-medium">{q.title}</a>
                             <p className="text-sm text-gray-600 mt-1">{q.content.slice(0, 120)}...</p>
                             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">

@@ -118,6 +118,12 @@ const UniversityDashboardContent = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Check for duplicate student_id
+    const exists = students.some(s => s.student_id === formData.student_id);
+    if (exists) {
+      alert("Student ID already exists. Please use a unique student ID.");
+      return;
+    }
     try {
       const payload = {
         ...formData,
