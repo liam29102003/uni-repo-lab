@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 
 const AdminSetting = () => {
   const [settings, setSettings] = useState(null);
-  const Settingapi = "http://127.0.0.1:8000";
+  const Settingapi = "http://127.0.0.1:8100";
 
   // Fetch settings on mount
   useEffect(() => {
