@@ -144,7 +144,7 @@ const ProjectUpload: React.FC = () => {
   };
 
   async function getUsers() {
-    const url = "http://localhost:8080/api/v1/users/users/basic";
+    const url = "http://localhost:8080/api/v1/users/students/basic";
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch users");
@@ -316,8 +316,16 @@ const ProjectUpload: React.FC = () => {
       formData.append("links", JSON.stringify(links));
 
       // Files
-      uploadedFiles.forEach((file) => formData.append("files", file));
-      screenshots.forEach((file) => formData.append("screenshots", file));
+      formData.append("files", JSON.stringify(uploadedFiles.map(f => ({
+  filename: f.name,
+  url: `https://<your-supabase-bucket-url>/${f.name}`,  // adjust to your Supabase public URL
+  size: f.size
+}))));
+
+formData.append("screenshots", JSON.stringify(images));
+
+
+
 
       // Call backend API
       const response = await fetch("http://localhost:8090/projects/", {

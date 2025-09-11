@@ -256,10 +256,12 @@ const ProjectDetail: React.FC = () => {
   // Add reply
   const handleAddReply = async (commentId, replyText) => {
     if (!replyText?.trim()) return
+      const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : null;
 
     try {
       const form = new FormData()
-      form.append("author", "Anonymous") // or logged-in user
+      form.append("author", user.username) // or logged-in user
       form.append("content", replyText)
       form.append("authorId", mockUser.id) // assuming mockUser has id
 
@@ -318,10 +320,12 @@ const ProjectDetail: React.FC = () => {
 
   const handleAddComment = async () => {
     if (!comment.trim()) return
+      const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : null;
     try {
       setLoading(true)
       const form = new FormData()
-      form.append("author", "Anonymous") // or from logged in user
+      form.append("author", "user.username") // or from logged in user
       form.append("content", comment)
       form.append("authorId", mockUser.id) // assuming mockUser has id
 
@@ -583,12 +587,10 @@ const ProjectDetail: React.FC = () => {
                     {project.files.map((file, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
-                            <span className="text-xs font-medium text-primary">{file.type.slice(0, 2).toUpperCase()}</span>
-                          </div>
+                          
                           <div>
-                            <p className="font-medium">{file.name}</p>
-                            <p className="text-sm text-muted-foreground">{file.size}</p>
+                            <p className="font-medium">{file.filename}</p>
+                            <p className="text-sm text-muted-foreground">{file.size / 1000} KB</p>
                           </div>
                         </div>
                         <Button size="sm" variant="outline"><Download className="w-4 h-4" /></Button>
@@ -733,7 +735,7 @@ const ProjectDetail: React.FC = () => {
                                           </div>
 
                                           {/* Reply content */}
-                                          <p className="text-academic">{mockUser.id} </p>
+                                          <p className="text-academic">{r.content} </p>
 
                                           {/* Reply Actions (Edit/Delete by author) */}
                                           <div className="flex gap-3 text-xs text-muted-foreground">
