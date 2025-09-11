@@ -1990,4 +1990,4 @@ const UniversityDashboard = () => (
   </ProtectedRoute>
 );
 
-export default UniversityDashboard;
+export default UniversityDashboard

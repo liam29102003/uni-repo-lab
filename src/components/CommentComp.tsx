@@ -12,17 +12,7 @@ export default function CommentComp({parentId,parentType}) {
 
  const handlePostComment = async () => {
     try {
-<<<<<<< HEAD
-      console.log(JSON.stringify({
-          body: comment,
-          createdBy: userId,
-          parentType: parentType,
-          parentId,
-        }))
-      const response = await fetch("http://localhost:8000/api/questions/save_comment", {
-=======
       const response = await fetch("http://localhost:8070/api/questions/save_comment", {
->>>>>>> 0234e8e8cd49ece018f5497b57743d7b6ab92180
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
