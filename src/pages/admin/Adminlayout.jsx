@@ -510,11 +510,7 @@ const Adminlayout = () => {
             </div>
           )}
 
-<<<<<<< HEAD
-          {/*  */}
-=======
           {activeTab === "settings" && <AdminSetting />}
->>>>>>> 0234e8e8cd49ece018f5497b57743d7b6ab92180
         </div>
       </div>
     </div>
