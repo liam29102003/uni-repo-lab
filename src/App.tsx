@@ -40,7 +40,7 @@ const App = () => (
           <Route path="/forum" element={<Forum />} />
           <Route path="/forum/:id" element={<ForumDetail />} />
           <Route path="/forum/ask" element={<AskQuestion />} />
-          <Route path="/join" element={<JoinUniversity />} />
+          <Route path="/register" element={<JoinUniversity />} />
           <Route path="/admin" element={<Adminlayout />} />
           <Route path="/university" element={<UniversityDashboard />} />
           <Route path="/profile" element={<Profile />} />

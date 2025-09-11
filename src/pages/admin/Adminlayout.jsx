@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
 import AdminDashboard from "./AdminDashboard";
-
+import AdminSetting from "./AdminSetting";
 import {
   Table,
   TableBody,
@@ -72,7 +72,7 @@ const Adminlayout = () => {
         `http://127.0.0.1:8000/universities/${id}/approve`,
         {
           method: "POST",
-        },
+        }
       );
       const data = await res.json();
 
@@ -140,7 +140,7 @@ const Adminlayout = () => {
       fetch("http://127.0.0.1:8000/universities/")
         .then((res) => res.json())
         .then((data) =>
-          setUniversities(data.filter((u) => u.status === "approved")),
+          setUniversities(data.filter((u) => u.status === "approved"))
         );
     }
   }, [activeTab]);
@@ -177,11 +177,29 @@ const Adminlayout = () => {
     },
   ];
 
-  //   const mockStudents = [
-  //     { id: 1, name: "Sarah Chen", university: "MIT", email: "sarah.chen@mit.edu", projects: 5 },
-  //     { id: 2, name: "Alex Kumar", university: "Stanford", email: "alex.kumar@stanford.edu", projects: 3 },
-  //     { id: 3, name: "Maria Rodriguez", university: "UC Berkeley", email: "maria.r@berkeley.edu", projects: 7 },
-  //   ];
+  const mockStudents = [
+    {
+      id: 1,
+      name: "Sarah Chen",
+      university: "MIT",
+      email: "sarah.chen@mit.edu",
+      projects: 5,
+    },
+    {
+      id: 2,
+      name: "Alex Kumar",
+      university: "Stanford",
+      email: "alex.kumar@stanford.edu",
+      projects: 3,
+    },
+    {
+      id: 3,
+      name: "Maria Rodriguez",
+      university: "UC Berkeley",
+      email: "maria.r@berkeley.edu",
+      projects: 7,
+    },
+  ];
 
   const mockRequests = [
     {
@@ -289,7 +307,7 @@ const Adminlayout = () => {
                                   setExpandedUniversityId(
                                     expandedUniversityId === uni.id
                                       ? null
-                                      : uni.id,
+                                      : uni.id
                                   )
                                 }
                               >
@@ -354,7 +372,7 @@ const Adminlayout = () => {
                                     <strong>Created At:</strong>{" "}
                                     {uni.created_at
                                       ? new Date(
-                                          uni.created_at,
+                                          uni.created_at
                                         ).toLocaleDateString()
                                       : "N/A"}
                                   </div>
@@ -492,7 +510,11 @@ const Adminlayout = () => {
             </div>
           )}
 
+<<<<<<< HEAD
           {/*  */}
+=======
+          {activeTab === "settings" && <AdminSetting />}
+>>>>>>> 0234e8e8cd49ece018f5497b57743d7b6ab92180
         </div>
       </div>
     </div>
