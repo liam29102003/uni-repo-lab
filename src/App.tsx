@@ -42,7 +42,7 @@ const App = () => (
           <Route path="/forum/ask" element={<AskQuestion />} />
           <Route path="/join" element={<JoinUniversity />} />
           <Route path="/admin" element={<Adminlayout />} />
-          <Route path="/university" element={<UniversityLayout />} />
+          <Route path="/university" element={<UniversityDashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/student-management" element={<StudentManagement />} />
           <Route path="/login" element={<Login />} />

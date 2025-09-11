@@ -8,11 +8,16 @@ export default function CommentComp({parentId,parentType}) {
   const [comments, setComments] = useState<any[]>([]);
   const [comment, setComment] = useState("");
 
-  const userId = "64f9a2b7c5e4f123456789ab";
-  // const parentId = "68bfac12249e8b4fc045b596";
+  const userId = localStorage.getItem("user_object_id");
 
  const handlePostComment = async () => {
     try {
+      console.log(JSON.stringify({
+          body: comment,
+          createdBy: userId,
+          parentType: parentType,
+          parentId,
+        }))
       const response = await fetch("http://localhost:8000/api/questions/save_comment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
