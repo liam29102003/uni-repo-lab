@@ -10,7 +10,7 @@ import { Search, MessageSquare, TrendingUp, Calendar, User, ArrowUp, ArrowDown }
 import { useNavigate } from "react-router-dom";
 
 const Forum = () => {
-      const university = JSON.parse(localStorage.getItem('user')).university
+      const university = JSON.parse(localStorage.getItem('user'))?.university
       // console.log(university)
       const navigate = useNavigate()
       const [searchQuery, setSearchQuery] = useState("");
