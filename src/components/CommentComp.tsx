@@ -13,7 +13,7 @@ export default function CommentComp({parentId,parentType}) {
 
  const handlePostComment = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/questions/save_comment", {
+      const response = await fetch("http://localhost:8070/api/questions/save_comment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -39,7 +39,7 @@ export default function CommentComp({parentId,parentType}) {
   };
 
   const fetchComments = async() =>{
-      fetch(`http://localhost:8000/api/questions/get/all/comments?parentId=${parentId}&parentType=${parentType}`)
+      fetch(`http://localhost:8070/api/questions/get/all/comments?parentId=${parentId}&parentType=${parentType}`)
         .then((res) => res.json())
         .then((data) => {
           console.log(data)
