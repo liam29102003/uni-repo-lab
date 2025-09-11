@@ -70,6 +70,8 @@ interface Project {
   starredByMe: boolean;
 }
 
+// user = localStorage.getItem("user");c
+
 const ProjectDetail: React.FC = () => {
   const { id } = useParams();
   const [project, setProject] = useState<Project | null>(null);
@@ -459,6 +461,16 @@ const ProjectDetail: React.FC = () => {
   if (loading) return <p className="text-center py-12">Loading project...</p>;
   if (error) return <p className="text-center py-12 text-red-500">{error}</p>;
   if (!project) return <p className="text-center py-12">Project not found</p>;
+
+
+   const headerUser = user
+    ? {
+        name: user.username,
+        email: user.email,
+        role: (user as any).role || 'student',
+        avatar: user.profile_image || undefined,
+      }
+    : undefined;
 
   return (
     <div className="min-h-screen bg-background">

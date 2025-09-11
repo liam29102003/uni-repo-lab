@@ -11,8 +11,8 @@ const HomePage: React.FC = () => {
       <Header />
       <main>
         <HeroSection />
-        <FeaturedProjects />
-        <PartnerUniversities />
+        {/* <FeaturedProjects />
+        <PartnerUniversities /> */}
       </main>
       <Footer />
     </div>

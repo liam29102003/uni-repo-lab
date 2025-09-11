@@ -36,7 +36,7 @@ const HeroSection: React.FC = () => {
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto">
+          {/* <div className="max-w-2xl mx-auto">
             <div className="relative flex items-center bg-white/10 backdrop-blur-sm rounded-2xl p-2 border border-white/20">
               <Search className="w-5 h-5 text-white/70 ml-4" />
               <Input 
@@ -47,7 +47,7 @@ const HeroSection: React.FC = () => {
                 Search
               </Button>
             </div>
-          </div>
+          </div> */}
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -67,13 +67,15 @@ const HeroSection: React.FC = () => {
               variant="outline" 
               className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-lg px-8 py-4 backdrop-blur-sm"
             >
-              <Play className="w-5 h-5 mr-2" />
-              Watch Demo
+             <Link to="/register">
+                Sign in
+                {/* <ArrowRight className="w-5 h-5 ml-2" /> */}
+              </Link>
             </Button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto">
+          {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-12 max-w-2xl mx-auto">
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-white">250+</div>
               <div className="text-white/80 text-sm font-medium">Universities</div>
@@ -86,7 +88,7 @@ const HeroSection: React.FC = () => {
               <div className="text-3xl md:text-4xl font-bold text-white">50K+</div>
               <div className="text-white/80 text-sm font-medium">Students</div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

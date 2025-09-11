@@ -1,18 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { 
-  Eye, 
-  Star, 
-  Users, 
-  Calendar,
-  ExternalLink,
-  Github,
-  BookOpen,
-  ArrowRight
-} from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Star, BookOpen, Users, Calendar } from "lucide-react";
 
 interface Project {
   id: string;
@@ -21,187 +10,88 @@ interface Project {
   university: string;
   team: string[];
   tags: string[];
-  visibility: 'Public' | 'University Only' | 'Team Only';
+  visibility: string;
   views: number;
   stars: number;
   createdAt: string;
-  image?: string;
 }
 
-const mockProjects: Project[] = [
-  {
-    id: '1',
-    title: 'AI-Powered Learning Assistant',
-    description: 'An intelligent tutoring system that adapts to individual learning patterns using machine learning algorithms.',
-    university: 'MIT',
-    team: ['Sarah Johnson', 'Mike Chen', 'Emma Davis'],
-    tags: ['AI', 'Machine Learning', 'Education', 'Python'],
-    visibility: 'Public',
-    views: 1247,
-    stars: 89,
-    createdAt: '2024-01-15'
-  },
-  {
-    id: '2',
-    title: 'Sustainable Campus Energy System',
-    description: 'IoT-based energy monitoring and optimization system for university campuses to reduce carbon footprint.',
-    university: 'Stanford',
-    team: ['Alex Rodriguez', 'Lisa Wang', 'David Thompson', 'Maria Garcia'],
-    tags: ['IoT', 'Sustainability', 'Arduino', 'Environmental'],
-    visibility: 'Public',
-    views: 892,
-    stars: 67,
-    createdAt: '2024-01-20'
-  },
-  {
-    id: '3',
-    title: 'Virtual Reality History Museum',
-    description: 'Immersive VR experience showcasing historical events and artifacts with interactive educational content.',
-    university: 'Harvard',
-    team: ['Jessica Park', 'Ryan Miller', 'Sophie Anderson'],
-    tags: ['VR', 'Unity', 'History', 'Education', 'C#'],
-    visibility: 'University Only',
-    views: 654,
-    stars: 45,
-    createdAt: '2024-01-25'
-  }
-];
-
 const FeaturedProjects: React.FC = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+  const fetchProjects = async () => {
+    try {
+      const params = new URLSearchParams({
+        limit: "3", // optional
+      });
+
+      const response = await fetch(`http://localhost:8090/projects/?${params.toString()}`);
+      const data = await response.json();
+      console.log("API response:", data);
+
+      // Adjust this according to actual structure
+      const projectsArray = Array.isArray(data) ? data : data.projects;
+
+      setProjects(projectsArray.slice(0, 3));
+    } catch (err) {
+      console.error("Failed to fetch projects:", err);
+    }
+  };
+
+  fetchProjects();
+}, []);
+
+
   const getVisibilityColor = (visibility: string) => {
     switch (visibility) {
-      case 'Public':
-        return 'bg-green-100 text-green-700 border-green-200';
-      case 'University Only':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'Team Only':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
+      case "Public":
+        return "bg-green-100 text-green-700";
+      case "University Only":
+        return "bg-blue-100 text-blue-700";
+      case "Team Only":
+        return "bg-orange-100 text-orange-700";
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
   return (
-    <section className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold heading-academic mb-6">
-            Featured Projects
-          </h2>
-          <p className="text-xl text-academic max-w-3xl mx-auto">
-            Discover innovative projects from top universities around the world. 
-            From AI research to sustainability initiatives, explore cutting-edge student work.
-          </p>
-        </div>
-
-        {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {mockProjects.map((project, index) => (
-            <Card 
-              key={project.id} 
-              className="project-card animate-slide-up group hover:scale-102"
-              style={{ animationDelay: `${index * 0.2}s` }}
-            >
-              <CardHeader className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <Badge 
-                    variant="outline" 
-                    className={`${getVisibilityColor(project.visibility)} font-medium`}
-                  >
-                    {project.visibility}
-                  </Badge>
-                  <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Eye className="w-4 h-4" />
-                      <span>{project.views}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4" />
-                      <span>{project.stars}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
-                  {project.title}
-                </h3>
-                
-                <p className="text-academic line-clamp-3">
-                  {project.description}
-                </p>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                {/* University */}
-                <div className="flex items-center space-x-2">
-                  <BookOpen className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-foreground">{project.university}</span>
-                </div>
-
-                {/* Team */}
-                <div className="flex items-center space-x-2">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    {project.team.slice(0, 2).join(', ')}
-                    {project.team.length > 2 && ` +${project.team.length - 2} more`}
-                  </span>
-                </div>
-
-                {/* Date */}
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(project.createdAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </span>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {project.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {project.tags.length > 3 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{project.tags.length - 3}
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center space-x-2 pt-2">
-                  <Button size="sm" variant="outline" className="flex-1" asChild>
-                    <Link to={`/projects/${project.id}`}>
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      View Details
-                    </Link>
-                  </Button>
-                  <Button size="sm" variant="ghost" className="px-3">
-                    <Github className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* View All Button */}
-        <div className="text-center">
-          <Button size="lg" variant="outline" className="px-12" asChild>
-            <Link to="/projects">
-              Explore All Projects
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </section>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {projects.map((project) => (
+        <Card key={project.id} className="p-4">
+          <div className="flex justify-between items-center mb-2">
+            <Badge className={getVisibilityColor(project.visibility)}>{project.visibility}</Badge>
+            <div className="flex gap-2 text-sm">
+              <div className="flex items-center gap-1">
+                <Eye className="w-4 h-4" /> {project.views}
+              </div>
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4" /> {project.stars}
+              </div>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold">{project.title}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-3">{project.description}</p>
+          <div className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <BookOpen className="w-4 h-4" /> {project.university}
+            </div>
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4" /> {project.team.join(", ")}
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" /> {new Date(project.createdAt).toLocaleDateString()}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {project.tags.map((tag) => (
+                <Badge key={tag} className="text-xs">{tag}</Badge>
+              ))}
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
   );
 };
 

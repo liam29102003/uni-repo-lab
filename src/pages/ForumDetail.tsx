@@ -54,6 +54,7 @@ const ForumDetail: React.FC = () => {
     try {
       const res = await fetch(`http://localhost:8070/api/questions/${id}`);
       const data = await res.json();
+       console.log(data)
       setQuestion(data.question);
       setAnswers(data.answers);
        // Flatten all voters from answers
@@ -102,6 +103,7 @@ const ForumDetail: React.FC = () => {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
+      console.log(data)
       toast(data?.message || 'Answer submitted');
       setNewAnswer('');
       fetchData();
