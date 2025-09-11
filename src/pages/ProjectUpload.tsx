@@ -316,15 +316,7 @@ const ProjectUpload: React.FC = () => {
       formData.append("links", JSON.stringify(links));
 
       // Files
-      formData.append("files", JSON.stringify(uploadedFiles.map(f => ({
-  filename: f.name,
-  url: `https://<your-supabase-bucket-url>/${f.name}`,  // adjust to your Supabase public URL
-  size: f.size
-}))));
-
-formData.append("screenshots", JSON.stringify(images));
-
-
+      
 
 
       // Call backend API

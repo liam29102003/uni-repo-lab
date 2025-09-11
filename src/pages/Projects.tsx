@@ -323,18 +323,7 @@ const Projects: React.FC = () => {
                 </Select>
 
 
-                <Select value={selectedUniversity} onValueChange={setSelectedUniversity}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select University" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {universities.map((uni) => (
-                      <SelectItem key={uni} value={uni}>
-                        {uni}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                
               </div>
 
               <div className="flex items-center space-x-2">

@@ -463,18 +463,18 @@ const ProjectDetail: React.FC = () => {
   if (!project) return <p className="text-center py-12">Project not found</p>;
 
 
-   const headerUser = user
-    ? {
-        name: user.username,
-        email: user.email,
-        role: (user as any).role || 'student',
-        avatar: user.profile_image || undefined,
-      }
-    : undefined;
+  //  const headerUser = user
+  //   ? {
+  //       name: user.username,
+  //       email: user.email,
+  //       role: (user as any).role || 'student',
+  //       avatar: user.profile_image || undefined,
+  //     }
+  //   : undefined;
 
   return (
     <div className="min-h-screen bg-background">
-      <Header user={mockUser} />
+      <Header />
       <main className="container mx-auto px-4 py-8">
         {/* Back */}
         <Button variant="ghost" asChild className="mb-4">
@@ -548,7 +548,7 @@ const ProjectDetail: React.FC = () => {
               )}
               {/* <span className="ml-2 text-sm text-muted-foreground">{project.stars || 0}</span> */}
             </Button>
-            <Button><Download className="w-4 h-4 mr-2" />Download</Button>
+            {/* <Button><Download className="w-4 h-4 mr-2" />Download</Button> */}
           </div>
         </div>
 
@@ -605,7 +605,12 @@ const ProjectDetail: React.FC = () => {
                             <p className="text-sm text-muted-foreground">{file.size / 1000} KB</p>
                           </div>
                         </div>
-                        <Button size="sm" variant="outline"><Download className="w-4 h-4" /></Button>
+<Button size="sm" variant="outline" asChild>
+  <a href="/files/sample.pdf" download>
+    <Download className="w-4 h-4 mr-1" />
+    Download
+  </a>
+</Button>
                       </div>
                     ))}
                   </CardContent>
